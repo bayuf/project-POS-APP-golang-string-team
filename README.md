@@ -1,2 +1,1 @@
-# project-POS-APP-golang-string-team
-POS App Golang
+# Project POS APP Golang
