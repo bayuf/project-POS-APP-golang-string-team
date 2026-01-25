@@ -13,5 +13,5 @@ type MenuCategory struct {
 	UpdatedAt *time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 
-	Products []Product
+	Products []Product `gorm:"foreignKey:CategoryID;references:ID"`
 }
