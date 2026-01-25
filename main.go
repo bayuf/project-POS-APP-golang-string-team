@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/cmd"
+	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/repository"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/wire"
 	"github.com/bayuf/project-POS-APP-golang-string-team/pkg/database"
@@ -35,6 +36,8 @@ func main() {
 		logger.Error("cant init database :", zap.Error(err))
 		log.Fatal("cant init database :", err)
 	}
+
+	data.Migrate(dbPool)
 
 	// init layer
 	repo := repository.NewRepository(dbPool, logger)
