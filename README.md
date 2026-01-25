@@ -1,7 +1,8 @@
 # Project POS APP Golang
 
 ## Database Migrate
-After auto migrate database add constraint (Opsional)
+### After auto migrate database add constraint (Opsional).
+
 table users
 ```
 ALTER TABLE users
