@@ -6,7 +6,7 @@ import (
 )
 
 func Migrate(db *gorm.DB) error {
-	return db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&entity.User{},
 		&entity.MenuCategory{},
 		&entity.RestaurantTable{},
@@ -19,5 +19,13 @@ func Migrate(db *gorm.DB) error {
 		&entity.Reservation{},
 		&entity.OTPRequest{},
 		&entity.Notification{},
-	)
+	); err != nil {
+		return err
+	}
+
+	if err := runConstraints(db); err != nil {
+		return err
+	}
+
+	return nil
 }
