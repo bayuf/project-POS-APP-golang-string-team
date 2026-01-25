@@ -16,15 +16,16 @@ type Configuration struct {
 }
 
 type DatabaseCofig struct {
-	Name     string
-	Username string
-	Password string
-	Host     string
-	Port     string
-	SSL      string
-	MaxConn  int32
-	MaxIdle  int
-	MaxOpen  int
+	Name      string
+	Username  string
+	Password  string
+	Host      string
+	Port      string
+	SSL       string
+	MaxConn   int32
+	MaxIdle   int
+	MaxOpen   int
+	DBMigrate bool
 }
 
 func ReadConfiguration() (*Configuration, error) {
@@ -54,15 +55,16 @@ func ReadConfiguration() (*Configuration, error) {
 		GinMode:     viper.GetString("GIN_MODE"),
 
 		DB: DatabaseCofig{
-			Name:     viper.GetString("DATABASE_NAME"),
-			Username: viper.GetString("DATABASE_USERNAME"),
-			Password: viper.GetString("DATABASE_PASSWORD"),
-			Host:     viper.GetString("DATABASE_HOST"),
-			Port:     viper.GetString("DATABASE_PORT"),
-			SSL:      viper.GetString("DATABASE_SSL_MODE"),
-			MaxConn:  viper.GetInt32("DATABASE_MAX_CONN"),
-			MaxIdle:  viper.GetInt("DATABASE_MAX_IDLE_CONN"),
-			MaxOpen:  viper.GetInt("DATABASE_MAX_OPEN_CONN"),
+			Name:      viper.GetString("DATABASE_NAME"),
+			Username:  viper.GetString("DATABASE_USERNAME"),
+			Password:  viper.GetString("DATABASE_PASSWORD"),
+			Host:      viper.GetString("DATABASE_HOST"),
+			Port:      viper.GetString("DATABASE_PORT"),
+			SSL:       viper.GetString("DATABASE_SSL_MODE"),
+			MaxConn:   viper.GetInt32("DATABASE_MAX_CONN"),
+			MaxIdle:   viper.GetInt("DATABASE_MAX_IDLE_CONN"),
+			MaxOpen:   viper.GetInt("DATABASE_MAX_OPEN_CONN"),
+			DBMigrate: viper.GetBool("DATABASE_MIGRATE"),
 		},
 	}, nil
 

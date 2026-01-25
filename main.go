@@ -37,7 +37,13 @@ func main() {
 		log.Fatal("cant init database :", err)
 	}
 
-	data.Migrate(dbPool)
+	// migrate database
+	if config.DB.DBMigrate == true {
+		if err := data.Migrate(dbPool); err != nil {
+			logger.Error("cant migrate database :", zap.Error(err))
+			log.Fatal("cant migrate database :", err)
+		}
+	}
 
 	// init layer
 	repo := repository.NewRepository(dbPool, logger)
