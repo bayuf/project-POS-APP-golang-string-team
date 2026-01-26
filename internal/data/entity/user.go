@@ -14,10 +14,12 @@ type User struct {
 	Email        string    `gorm:"size:100;not null;unique"`
 	PasswordHash string    `gorm:"type:text;not null;default:''"`
 	Role         string    `gorm:"size:20;not null"` // superadmin, admin, staff
-	IsActive     bool      `gorm:"default:true"`
-	CreatedAt    time.Time
-	UpdatedAt    *time.Time
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	// Address      string    `gorm:"size:255;not null;default:''"`
+	// AvatarURL    string    `gorm:"size:255;not null;default:'public/img/user/default.jpg'"`
+	IsActive  bool `gorm:"default:true"`
+	CreatedAt time.Time
+	UpdatedAt *time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 
 	OTPRequests   []OTPRequest
 	Notifications []Notification
