@@ -92,5 +92,5 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	utils.ResponseSuccess(c, http.StatusCreated, "success", nil)
+	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
 }
