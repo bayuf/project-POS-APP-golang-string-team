@@ -13,6 +13,7 @@ type UserRepositoryIface interface {
 	CreateUser(ctx context.Context, newUser entity.User) error
 	GetUserByID(ctx context.Context, ID uuid.UUID) (*entity.User, error)
 	UpdateUserByID(ctx context.Context, ID uuid.UUID, updatedUser entity.User) error
+	DeleteUserByID(ctx context.Context, ID uuid.UUID) error
 }
 
 type UserRepository struct {
@@ -62,11 +63,21 @@ func (r *UserRepository) UpdateUserByID(ctx context.Context, ID uuid.UUID, updat
 
 func (r *UserRepository) DeleteUserByID(ctx context.Context, ID uuid.UUID) error {
 	if err := r.db.WithContext(ctx).
+		Model(&entity.User{}).
+		Where("id = ? AND role != ?", ID, "superadmin").
+		Update("is_active", false).
+		Error; err != nil {
+		r.logger.Error("failed to deactivate user by id", zap.Error(err))
+		return err
+	}
+
+	if err := r.db.WithContext(ctx).
 		Delete(&entity.User{}, ID).
 		Where("role != ?", "superadmin").
 		Error; err != nil {
 		r.logger.Error("failed to delete user by id", zap.Error(err))
 		return err
 	}
+
 	return nil
 }

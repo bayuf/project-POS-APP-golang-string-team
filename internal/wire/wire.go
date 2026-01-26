@@ -25,5 +25,6 @@ func Wiring(repo *repository.Repository, logger *zap.Logger, config *utils.Confi
 func wireUser(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 	router.GET("/users/:id", adaptor.GetUserByID)
 	router.PUT("/users/:id", adaptor.UpdateUser)
+	router.DELETE("/users/:id", adaptor.DeleteUser)
 	router.POST("/users", adaptor.CreateUser)
 }

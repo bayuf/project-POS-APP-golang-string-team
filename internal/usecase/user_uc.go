@@ -119,3 +119,11 @@ func (uc *UserService) UpdateUserData(ctx context.Context, ID uuid.UUID, newUser
 
 	return nil
 }
+
+func (uc *UserService) DeleteUserByID(ctx context.Context, ID uuid.UUID) error {
+	if err := uc.repo.DeleteUserByID(ctx, ID); err != nil {
+		return err
+	}
+
+	return nil
+}
