@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/entity"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/repository"
@@ -34,16 +36,6 @@ func (uc *UserService) CreateUser(ctx context.Context, newUser dto.CreateUser) e
 		return err
 	}
 
-	shiftStart, err := utils.ParseTime(newUser.ShiftStart)
-	if err != nil {
-		return err
-	}
-
-	shiftEnd, err := utils.ParseTime(newUser.ShiftEnd)
-	if err != nil {
-		return err
-	}
-
 	if err := uc.repo.CreateUser(ctx, entity.User{
 		ID:               uuid.New(),
 		Name:             newUser.Name,
@@ -56,8 +48,8 @@ func (uc *UserService) CreateUser(ctx context.Context, newUser dto.CreateUser) e
 		Address:          newUser.Address,
 		AdditionalDetail: newUser.AdditionalDetail,
 		AvatarURL:        *newUser.AvatarURL,
-		ShiftStart:       shiftStart,
-		ShiftEnd:         shiftEnd,
+		ShiftStart:       newUser.ShiftStart,
+		ShiftEnd:         newUser.ShiftEnd,
 	}); err != nil {
 		return err
 	}
@@ -91,16 +83,6 @@ func (uc *UserService) UpdateUserData(ctx context.Context, ID uuid.UUID, newUser
 		return err
 	}
 
-	shiftStart, err := utils.ParseTime(newUserData.ShiftStart)
-	if err != nil {
-		return err
-	}
-
-	shiftEnd, err := utils.ParseTime(newUserData.ShiftEnd)
-	if err != nil {
-		return err
-	}
-
 	if err := uc.repo.UpdateUserByID(ctx, ID, entity.User{
 		Name:             newUserData.Name,
 		Email:            newUserData.Email,
@@ -111,8 +93,8 @@ func (uc *UserService) UpdateUserData(ctx context.Context, ID uuid.UUID, newUser
 		Address:          newUserData.Address,
 		AdditionalDetail: newUserData.AdditionalDetail,
 		AvatarURL:        *newUserData.AvatarURL,
-		ShiftStart:       shiftStart,
-		ShiftEnd:         shiftEnd,
+		ShiftStart:       newUserData.ShiftStart,
+		ShiftEnd:         newUserData.ShiftEnd,
 	}); err != nil {
 		return err
 	}
@@ -124,6 +106,65 @@ func (uc *UserService) DeleteUserByID(ctx context.Context, ID uuid.UUID) error {
 	if err := uc.repo.DeleteUserByID(ctx, ID); err != nil {
 		return err
 	}
-
 	return nil
+}
+
+func (uc *UserService) GetAllUser(ctx context.Context, req dto.UserFilterRequest) (*[]dto.UserLists, *dto.Pagination, error) {
+	// Set default limit jika kosong
+	if req.Page == 0 {
+		req.Page = 1
+	}
+	if req.Limit == 0 {
+		req.Limit = 5
+	}
+
+	// 1. Panggil Repository
+	users, total, err := uc.repo.ListUser(ctx, req)
+	if err != nil {
+		return nil, &dto.Pagination{}, err
+	}
+
+	var userResponse []dto.UserLists
+
+	for _, t := range *users {
+		now := time.Now()
+		age := now.Year() - t.BirthDate.Year()
+
+		if now.Month() < t.BirthDate.Month() || (now.Month() == t.BirthDate.Month() && now.Day() < t.BirthDate.Day()) {
+			age--
+		}
+
+		var shiftStart, shiftEnd string
+		var timing string
+		if t.ShiftStart != "" || t.ShiftEnd != "" {
+			shiftStart = t.ShiftStart
+			shiftEnd = t.ShiftEnd
+
+			timing = fmt.Sprintf("%s to %s", shiftStart, shiftEnd)
+		}
+
+		res := dto.UserLists{
+			ID:        t.ID,
+			Name:      t.Name,
+			Email:     t.Email,
+			Phone:     t.Phone,
+			Age:       age,
+			Salary:    t.Salary,
+			Role:      t.Role,
+			AvatarURL: t.AvatarURL,
+			Timing:    timing,
+		}
+		userResponse = append(userResponse, res)
+	}
+
+	totalPages := utils.TotalPage(req.Limit, total)
+
+	pagination := dto.Pagination{
+		CurrentPage:  req.Page,
+		Limit:        req.Limit,
+		TotalPages:   totalPages,
+		TotalRecords: total,
+	}
+
+	return &userResponse, &pagination, nil
 }

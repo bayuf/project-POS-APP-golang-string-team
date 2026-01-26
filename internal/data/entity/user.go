@@ -20,8 +20,8 @@ type User struct {
 	BirthDate    time.Time `gorm:"type:date"`
 	Salary       int64     `gorm:"not null;default:0"`
 
-	ShiftStart *time.Time `gorm:"type:time"`
-	ShiftEnd   *time.Time `gorm:"type:time"`
+	ShiftStart string `gorm:"type:time"`
+	ShiftEnd   string `gorm:"type:time"`
 
 	Address          string  `gorm:"text;not null;default:''"`
 	AdditionalDetail *string `gorm:"text;"`

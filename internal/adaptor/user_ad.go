@@ -2,6 +2,7 @@ package adaptor
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/dto"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/usecase"
@@ -116,4 +117,31 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	}
 
 	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
+}
+
+func (h *UserHandler) GetAllUsers(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	pageStr := c.Query("page")
+	sortBy := c.Query("sortby")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	filter := dto.UserFilterRequest{
+		Page:   page,
+		Limit:  h.config.Limit,
+		SortBy: sortBy,
+	}
+
+	users, pagination, err := h.uc.GetAllUser(ctx, filter)
+	if err != nil {
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponsePagination(c, http.StatusOK, "success", users, *pagination)
 }

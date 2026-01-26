@@ -28,3 +28,9 @@ type UpdateUser struct {
 	AdditionalDetail *string `json:"additional_detail"`
 	AvatarURL        *string `json:"avatar_url"`
 }
+
+type UserFilterRequest struct {
+	Page   int    `form:"page" binding:"min=1"`
+	Limit  int    `form:"limit" binding:"min=1,max=100"`
+	SortBy string `form:"sort_by"`
+}
