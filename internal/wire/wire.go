@@ -22,7 +22,6 @@ func Wiring(repo *repository.Repository, logger *zap.Logger, config *utils.Confi
 }
 
 // All Route Here
-
 func wireUser(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
-
+	router.POST("/users", adaptor.CreateUser)
 }
