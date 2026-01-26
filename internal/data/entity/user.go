@@ -9,17 +9,27 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	ID uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+
 	Name         string    `gorm:"size:100;not null"`
 	Email        string    `gorm:"size:100;not null;unique"`
 	PasswordHash string    `gorm:"type:text;not null;default:''"`
+	Phone        string    `gorm:"size:20;not null;default:''"`
 	Role         string    `gorm:"size:20;not null"` // superadmin, admin, staff
-	Address      string    `gorm:"size:255;not null;default:''"`
 	AvatarURL    string    `gorm:"size:255;not null;default:'public/img/user/default.jpg'"`
-	IsActive     bool      `gorm:"default:true"`
-	CreatedAt    time.Time
-	UpdatedAt    *time.Time
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	BirthDate    time.Time `gorm:"type:date"`
+	Salary       int64     `gorm:"not null;default:0"`
+
+	ShiftStart *time.Time `gorm:"type:time;"`
+	ShiftEnd   *time.Time `gorm:"type:time;'"`
+
+	Address          string  `gorm:"text;not null;default:''"`
+	AdditionalDetail *string `gorm:"text;"`
+
+	IsActive  bool `gorm:"default:true"`
+	CreatedAt time.Time
+	UpdatedAt *time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 
 	OTPRequests   []OTPRequest
 	Notifications []Notification
@@ -37,8 +47,11 @@ func SeedUsers() []User {
 			Name:         "Super Admin",
 			Email:        "super@admin.com",
 			PasswordHash: password,
+			Phone:        "089111111111",
 			Role:         "superadmin",
 			Address:      "Kab. Gresik",
+			BirthDate:    time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
+			Salary:       10000000,
 			IsActive:     true,
 			CreatedAt:    now,
 			UpdatedAt:    &now,
@@ -48,8 +61,11 @@ func SeedUsers() []User {
 			Name:         "Bayu Firmansyah",
 			Email:        "bayu19fr@gmail.com",
 			PasswordHash: password,
+			Phone:        "089111111111",
 			Role:         "admin",
 			Address:      "Kab. Gresik",
+			BirthDate:    time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
+			Salary:       10000000,
 			IsActive:     true,
 			CreatedAt:    now,
 			UpdatedAt:    &now,
@@ -59,8 +75,11 @@ func SeedUsers() []User {
 			Name:         "Alif Dwi Rahman",
 			Email:        "alifdwirahman.alf@gmail.com",
 			PasswordHash: password,
+			Phone:        "089111111111",
 			Role:         "admin",
 			Address:      "Kota Jakarta",
+			BirthDate:    time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
+			Salary:       10000000,
 			IsActive:     true,
 			CreatedAt:    now,
 			UpdatedAt:    &now,
@@ -70,8 +89,11 @@ func SeedUsers() []User {
 			Name:         "Fathoni Nur Habibi",
 			Email:        "habibifathoni1509@gmail.com",
 			PasswordHash: password,
+			Phone:        "089111111111",
 			Role:         "admin",
 			Address:      "Kota Jakarta",
+			BirthDate:    time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
+			Salary:       10000000,
 			IsActive:     true,
 			CreatedAt:    now,
 			UpdatedAt:    &now,
