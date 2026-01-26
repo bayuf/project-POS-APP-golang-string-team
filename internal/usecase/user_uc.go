@@ -46,3 +46,18 @@ func (uc *UserService) CreateUser(ctx context.Context, newUser dto.CreateUser) e
 
 	return nil
 }
+
+func (uc *UserService) GetUserByID(ctx context.Context, ID uuid.UUID) (*dto.UserDetail, error) {
+	data, err := uc.repo.GetUserByID(ctx, ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.UserDetail{
+		Name:      data.Name,
+		Email:     data.Email,
+		Role:      data.Role,
+		Address:   data.Address,
+		AvatarURL: data.AvatarURL,
+	}, nil
+}

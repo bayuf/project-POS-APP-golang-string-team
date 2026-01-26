@@ -23,5 +23,6 @@ func Wiring(repo *repository.Repository, logger *zap.Logger, config *utils.Confi
 
 // All Route Here
 func wireUser(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
+	router.GET("/users/:id", adaptor.GetUserByID)
 	router.POST("/users", adaptor.CreateUser)
 }
