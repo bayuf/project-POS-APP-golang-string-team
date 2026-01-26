@@ -12,6 +12,7 @@ import (
 type UserRepositoryIface interface {
 	CreateUser(ctx context.Context, newUser entity.User) error
 	GetUserByID(ctx context.Context, ID uuid.UUID) (*entity.User, error)
+	// UpdateUserByID(ctx context.Context, ID uuid.UUID, updatedUser entity.User)
 }
 
 type UserRepository struct {

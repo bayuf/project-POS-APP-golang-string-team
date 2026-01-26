@@ -28,18 +28,26 @@ func (uc *UserService) CreateUser(ctx context.Context, newUser dto.CreateUser) e
 	newUUID := uuid.New()
 
 	// hash Password
-	hashedPassword, err := utils.HashString(newUser.Password)
+	hashedPassword, err := utils.HashString("12345")
 	if err != nil {
 		uc.logger.Error("failed to hash password", zap.Error(err))
 		return err
 	}
 
 	if err := uc.repo.CreateUser(ctx, entity.User{
-		ID:           newUUID,
-		Name:         newUser.Name,
-		Email:        newUser.Email,
-		PasswordHash: hashedPassword,
-		Role:         newUser.Role,
+		ID:               newUUID,
+		Name:             newUser.Name,
+		Email:            newUser.Email,
+		Phone:            newUser.Phone,
+		BirthDate:        newUser.Birthdate,
+		Salary:           newUser.Salary,
+		PasswordHash:     hashedPassword,
+		Role:             newUser.Role,
+		Address:          newUser.Address,
+		AdditionalDetail: newUser.AdditionalDetail,
+		AvatarURL:        *newUser.AvatarURL,
+		ShiftStart:       &newUser.ShiftStart,
+		ShiftEnd:         &newUser.ShiftEnd,
 	}); err != nil {
 		return err
 	}
@@ -54,10 +62,19 @@ func (uc *UserService) GetUserByID(ctx context.Context, ID uuid.UUID) (*dto.User
 	}
 
 	return &dto.UserDetail{
-		Name:      data.Name,
-		Email:     data.Email,
-		Role:      data.Role,
-		Address:   data.Address,
-		AvatarURL: data.AvatarURL,
+		Name:       data.Name,
+		Email:      data.Email,
+		Phone:      data.Phone,
+		BirthDate:  data.BirthDate,
+		Role:       data.Role,
+		Address:    data.Address,
+		Salary:     data.Salary,
+		AvatarURL:  data.AvatarURL,
+		ShiftStart: data.ShiftStart,
+		ShiftEnd:   data.ShiftEnd,
 	}, nil
 }
+
+// func (uc *UserService) UpdateUserData(ctx context.Context, ID uuid.UUID, newUserData dto.) error {
+// 	uc.repo.UpdateUserByID(ctx, ID, )
+// }
