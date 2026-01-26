@@ -24,30 +24,40 @@ func NewUserService(repo repository.UserRepositoryIface, logger *zap.Logger) *Us
 }
 
 func (uc *UserService) CreateUser(ctx context.Context, newUser dto.CreateUser) error {
-	// create uuid
-	newUUID := uuid.New()
-
-	// hash Password
 	hashedPassword, err := utils.HashString("12345")
 	if err != nil {
-		uc.logger.Error("failed to hash password", zap.Error(err))
+		return err
+	}
+
+	birthDate, err := utils.ParseDate(newUser.Birthdate)
+	if err != nil {
+		return err
+	}
+
+	shiftStart, err := utils.ParseTime(newUser.ShiftStart)
+	if err != nil {
+		return err
+	}
+
+	shiftEnd, err := utils.ParseTime(newUser.ShiftEnd)
+	if err != nil {
 		return err
 	}
 
 	if err := uc.repo.CreateUser(ctx, entity.User{
-		ID:               newUUID,
+		ID:               uuid.New(),
 		Name:             newUser.Name,
 		Email:            newUser.Email,
 		Phone:            newUser.Phone,
-		BirthDate:        newUser.Birthdate,
+		BirthDate:        birthDate,
 		Salary:           newUser.Salary,
 		PasswordHash:     hashedPassword,
 		Role:             newUser.Role,
 		Address:          newUser.Address,
 		AdditionalDetail: newUser.AdditionalDetail,
 		AvatarURL:        *newUser.AvatarURL,
-		ShiftStart:       &newUser.ShiftStart,
-		ShiftEnd:         &newUser.ShiftEnd,
+		ShiftStart:       shiftStart,
+		ShiftEnd:         shiftEnd,
 	}); err != nil {
 		return err
 	}
@@ -75,6 +85,37 @@ func (uc *UserService) GetUserByID(ctx context.Context, ID uuid.UUID) (*dto.User
 	}, nil
 }
 
-// func (uc *UserService) UpdateUserData(ctx context.Context, ID uuid.UUID, newUserData dto.) error {
-// 	uc.repo.UpdateUserByID(ctx, ID, )
-// }
+func (uc *UserService) UpdateUserData(ctx context.Context, ID uuid.UUID, newUserData dto.UpdateUser) error {
+	birthDate, err := utils.ParseDate(newUserData.Birthdate)
+	if err != nil {
+		return err
+	}
+
+	shiftStart, err := utils.ParseTime(newUserData.ShiftStart)
+	if err != nil {
+		return err
+	}
+
+	shiftEnd, err := utils.ParseTime(newUserData.ShiftEnd)
+	if err != nil {
+		return err
+	}
+
+	if err := uc.repo.UpdateUserByID(ctx, ID, entity.User{
+		Name:             newUserData.Name,
+		Email:            newUserData.Email,
+		Phone:            newUserData.Phone,
+		BirthDate:        birthDate,
+		Salary:           newUserData.Salary,
+		Role:             newUserData.Role,
+		Address:          newUserData.Address,
+		AdditionalDetail: newUserData.AdditionalDetail,
+		AvatarURL:        *newUserData.AvatarURL,
+		ShiftStart:       shiftStart,
+		ShiftEnd:         shiftEnd,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}

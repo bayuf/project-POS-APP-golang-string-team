@@ -65,3 +65,32 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 
 	utils.ResponseSuccess(c, http.StatusOK, "success", user)
 }
+
+func (h *UserHandler) UpdateUser(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	user := dto.UpdateUser{}
+	if err := c.BindJSON(&user); err != nil {
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	idStr := c.Param("id")
+	if idStr == "" {
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", "id is required")
+		return
+	}
+
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	if err := h.uc.UpdateUserData(ctx, id, user); err != nil {
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusCreated, "success", nil)
+}

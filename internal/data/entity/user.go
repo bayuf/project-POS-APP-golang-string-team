@@ -20,16 +20,16 @@ type User struct {
 	BirthDate    time.Time `gorm:"type:date"`
 	Salary       int64     `gorm:"not null;default:0"`
 
-	ShiftStart *time.Time `gorm:"type:time;"`
-	ShiftEnd   *time.Time `gorm:"type:time;'"`
+	ShiftStart *time.Time `gorm:"type:time"`
+	ShiftEnd   *time.Time `gorm:"type:time"`
 
 	Address          string  `gorm:"text;not null;default:''"`
 	AdditionalDetail *string `gorm:"text;"`
 
-	IsActive  bool `gorm:"default:true"`
-	CreatedAt time.Time
-	UpdatedAt *time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	IsActive  bool           `gorm:"default:true"`
+	CreatedAt time.Time      `gorm:"type:timestamptz"`
+	UpdatedAt time.Time      `gorm:"type:timestamptz"`
+	DeletedAt gorm.DeletedAt `gorm:"type:timestamptz;index"`
 
 	OTPRequests   []OTPRequest
 	Notifications []Notification
@@ -54,7 +54,7 @@ func SeedUsers() []User {
 			Salary:       10000000,
 			IsActive:     true,
 			CreatedAt:    now,
-			UpdatedAt:    &now,
+			UpdatedAt:    now,
 		},
 		{
 			ID:           uuid.New(),
@@ -68,7 +68,7 @@ func SeedUsers() []User {
 			Salary:       10000000,
 			IsActive:     true,
 			CreatedAt:    now,
-			UpdatedAt:    &now,
+			UpdatedAt:    now,
 		},
 		{
 			ID:           uuid.New(),
@@ -82,7 +82,7 @@ func SeedUsers() []User {
 			Salary:       10000000,
 			IsActive:     true,
 			CreatedAt:    now,
-			UpdatedAt:    &now,
+			UpdatedAt:    now,
 		},
 		{
 			ID:           uuid.New(),
@@ -96,7 +96,7 @@ func SeedUsers() []User {
 			Salary:       10000000,
 			IsActive:     true,
 			CreatedAt:    now,
-			UpdatedAt:    &now,
+			UpdatedAt:    now,
 		},
 	}
 

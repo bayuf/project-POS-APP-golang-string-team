@@ -12,7 +12,7 @@ import (
 type UserRepositoryIface interface {
 	CreateUser(ctx context.Context, newUser entity.User) error
 	GetUserByID(ctx context.Context, ID uuid.UUID) (*entity.User, error)
-	// UpdateUserByID(ctx context.Context, ID uuid.UUID, updatedUser entity.User)
+	UpdateUserByID(ctx context.Context, ID uuid.UUID, updatedUser entity.User) error
 }
 
 type UserRepository struct {
@@ -28,7 +28,9 @@ func NewUserRepository(db *gorm.DB, logger *zap.Logger) *UserRepository {
 }
 
 func (r *UserRepository) CreateUser(ctx context.Context, newUser entity.User) error {
-	if err := r.db.WithContext(ctx).Create(&newUser).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Create(&newUser).
+		Error; err != nil {
 		r.logger.Error("failed to create user", zap.Error(err))
 		return err
 	}
@@ -37,7 +39,9 @@ func (r *UserRepository) CreateUser(ctx context.Context, newUser entity.User) er
 
 func (r *UserRepository) GetUserByID(ctx context.Context, ID uuid.UUID) (*entity.User, error) {
 	var user entity.User
-	if err := r.db.WithContext(ctx).First(&user, ID).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		First(&user, ID).
+		Error; err != nil {
 		r.logger.Error("failed to get user by id", zap.Error(err))
 		return nil, err
 	}
@@ -46,8 +50,10 @@ func (r *UserRepository) GetUserByID(ctx context.Context, ID uuid.UUID) (*entity
 
 func (r *UserRepository) UpdateUserByID(ctx context.Context, ID uuid.UUID, updatedUser entity.User) error {
 	if err := r.db.WithContext(ctx).
-		Model(&entity.User{}).Where("id = ?", ID).
-		Updates(updatedUser).Error; err != nil {
+		Model(&entity.User{}).
+		Where("id = ?", ID).
+		Updates(updatedUser).
+		Error; err != nil {
 		r.logger.Error("failed to update user by id", zap.Error(err))
 		return err
 	}
@@ -56,7 +62,9 @@ func (r *UserRepository) UpdateUserByID(ctx context.Context, ID uuid.UUID, updat
 
 func (r *UserRepository) DeleteUserByID(ctx context.Context, ID uuid.UUID) error {
 	if err := r.db.WithContext(ctx).
-		Delete(&entity.User{}, ID).Error; err != nil {
+		Delete(&entity.User{}, ID).
+		Where("role != ?", "superadmin").
+		Error; err != nil {
 		r.logger.Error("failed to delete user by id", zap.Error(err))
 		return err
 	}
