@@ -38,12 +38,14 @@ func main() {
 	}
 
 	// migrate database
-	if config.DB.DBMigrate == true {
+	if config.DB.DBMigrate {
 		if err := data.Migrate(dbPool); err != nil {
 			logger.Error("cant migrate database :", zap.Error(err))
 			log.Fatal("cant migrate database :", err)
 		}
 	}
+
+	// Seeder HERE
 
 	// init layer
 	repo := repository.NewRepository(dbPool, logger)
