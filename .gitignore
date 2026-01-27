@@ -18,7 +18,7 @@ coverage.*
 profile.cov
 
 #logging
-log
+logs
 # Dependency directories (remove the comment below to include it)
 # vendor/
 

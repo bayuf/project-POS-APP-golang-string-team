@@ -53,7 +53,6 @@ func seedCategories(db *gorm.DB, logger *zap.Logger) error {
 }
 
 func seedProducts(db *gorm.DB, logger *zap.Logger) error {
-	// Get categories
 	var categories []entity.MenuCategory
 	if err := db.Find(&categories).Error; err != nil {
 		return err
