@@ -33,6 +33,7 @@ type User struct {
 
 	OTPRequests   []OTPRequest
 	Notifications []Notification
+	Session       []Session `gorm:"foreignKey:UserID"`
 }
 
 func SeedUsers() []User {

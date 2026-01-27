@@ -7,10 +7,12 @@ import (
 
 type UseCase struct {
 	*UserService
+	*AuthService
 }
 
 func NewUseCase(repo *repository.Repository, logger *zap.Logger) *UseCase {
 	return &UseCase{
 		UserService: NewUserService(repo.UserRepository, logger),
+		AuthService: NewAuthService(repo.AuthRepository, logger),
 	}
 }

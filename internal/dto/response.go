@@ -38,3 +38,10 @@ type UserLists struct {
 	AvatarURL string    `json:"avatar_url,omitempty"`
 	Timing    string    `json:"timing,omitempty"`
 }
+
+// Auth
+type Session struct {
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	ExpiresAt time.Time `json:"expires_at"`
+}

@@ -8,10 +8,12 @@ import (
 
 type Adaptor struct {
 	*UserHandler
+	*AuthHandler
 }
 
 func NewAdaptor(uc *usecase.UseCase, logger *zap.Logger, config *utils.Configuration) *Adaptor {
 	return &Adaptor{
 		UserHandler: NewUserHandler(uc.UserService, logger, config),
+		AuthHandler: NewAuthHandler(uc.AuthService, logger, config),
 	}
 }

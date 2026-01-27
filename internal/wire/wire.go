@@ -16,7 +16,10 @@ func Wiring(repo *repository.Repository, logger *zap.Logger, config *utils.Confi
 
 	router := gin.Default() // use default middleware
 	r1 := router.Group("/api/v1")
+
+	// Wiring Routes
 	wireUser(r1, adaptor)
+	wireAuth(r1, adaptor)
 
 	return router
 }
@@ -28,4 +31,8 @@ func wireUser(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 	router.PUT("/users/:id", adaptor.UpdateUser)
 	router.DELETE("/users/:id", adaptor.DeleteUser)
 	router.POST("/users", adaptor.CreateUser)
+}
+
+func wireAuth(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
+	router.POST("/auth/login", adaptor.Login)
 }

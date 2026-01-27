@@ -34,3 +34,9 @@ type UserFilterRequest struct {
 	Limit  int    `form:"limit" binding:"min=1,max=100"`
 	SortBy string `form:"sort_by"`
 }
+
+// AUTH
+type Login struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=5"`
+}
