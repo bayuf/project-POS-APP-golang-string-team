@@ -6,11 +6,13 @@ import (
 )
 
 type UseCase struct {
+	repo repository.Repository
 	*UserService
 }
 
 func NewUseCase(repo *repository.Repository, logger *zap.Logger) *UseCase {
 	return &UseCase{
+		repo: *repo,
 		UserService: NewUserService(repo.UserRepository, logger),
 	}
 }
