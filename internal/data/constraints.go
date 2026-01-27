@@ -1,87 +1,129 @@
 package data
 
 import (
-	"strings"
-
 	"gorm.io/gorm"
 )
 
-func runConstraints(db *gorm.DB) error {
-	sqls := []string{
-		// role
-		`
-		ALTER TABLE users
-		ADD CONSTRAINT chk_users_role
-		CHECK (role IN ('superadmin','admin','staff'));
-		`,
-		// price product
-		`
-		ALTER TABLE products
-		ADD CONSTRAINT chk_products_price
-		CHECK (price >= 0);
-		`,
-		// stock inventory
-		`
-		ALTER TABLE inventories
-		ADD CONSTRAINT chk_inventories_stock
-		CHECK (stock >= 0);
-		`,
-		// capacity table
-		`
-		ALTER TABLE restaurant_tables
-		ADD CONSTRAINT chk_restaurant_tables_capacity
-		CHECK (capacity > 0);
-		`,
-		// tax
-		`
-		ALTER TABLE orders
-		ADD CONSTRAINT chk_orders_tax
-		CHECK (tax >= 0);
-		`,
-		// total price in order
-		`
-		ALTER TABLE orders
-		ADD CONSTRAINT chk_orders_total_price
-		CHECK (total_price >= 0);
-		`,
-		// status in order
-		`
-		ALTER TABLE orders
-		ADD CONSTRAINT chk_orders_status
-		CHECK (status IN ('pending','paid','cancelled'));
-		`,
-		// quantity in order
-		`
-		ALTER TABLE order_items
-		ADD CONSTRAINT chk_order_items_quantity
-		CHECK (quantity > 0);
-		`,
-		// price in order item
-		`
-		ALTER TABLE order_items
-		ADD CONSTRAINT chk_order_items_price
-		CHECK (price >= 0);
-		`,
-		// orderid and productid must unique
-		`
-		ALTER TABLE order_items
-		ADD CONSTRAINT uq_order_items_order_product
-		UNIQUE (order_id, product_id);
-		`,
-		// status in notification
-		`
-		ALTER TABLE notifications
-		ADD CONSTRAINT chk_notifications_status
-		CHECK (status IN ('new','read'));
-		`,
+func addConstraintIfNotExists(db *gorm.DB, name string, sql string) error {
+	var exists bool
+
+	checkSQL := `
+		SELECT EXISTS (
+			SELECT 1
+			FROM pg_constraint
+			WHERE conname = ?
+		);
+	`
+
+	if err := db.Raw(checkSQL, name).Scan(&exists).Error; err != nil {
+		return err
 	}
 
-	for _, q := range sqls {
-		if err := db.Exec(q).Error; err != nil {
-			// Abaikan jika constraint sudah ada
-			if !strings.Contains(err.Error(), "already exists") {
-				return err
-			}
+	if exists {
+		return nil
+	}
+
+	return db.Exec(sql).Error
+}
+
+func runConstraints(db *gorm.DB) error {
+	constraints := []struct {
+		name string
+		sql  string
+	}{
+		{
+			"chk_users_role",
+			`
+			ALTER TABLE users
+			ADD CONSTRAINT chk_users_role
+			CHECK (role IN ('superadmin','admin','staff'));
+			`,
+		},
+		{
+			"chk_products_price",
+			`
+			ALTER TABLE products
+			ADD CONSTRAINT chk_products_price
+			CHECK (price >= 0);
+			`,
+		},
+		{
+			"chk_inventories_stock",
+			`
+			ALTER TABLE inventories
+			ADD CONSTRAINT chk_inventories_stock
+			CHECK (stock >= 0);
+			`,
+		},
+		{
+			"chk_restaurant_tables_capacity",
+			`
+			ALTER TABLE restaurant_tables
+			ADD CONSTRAINT chk_restaurant_tables_capacity
+			CHECK (capacity > 0);
+			`,
+		},
+		{
+			"chk_orders_tax",
+			`
+			ALTER TABLE orders
+			ADD CONSTRAINT chk_orders_tax
+			CHECK (tax >= 0);
+			`,
+		},
+		{
+			"chk_orders_total_price",
+			`
+			ALTER TABLE orders
+			ADD CONSTRAINT chk_orders_total_price
+			CHECK (total_price >= 0);
+			`,
+		},
+		{
+			"chk_orders_status",
+			`
+			ALTER TABLE orders
+			ADD CONSTRAINT chk_orders_status
+			CHECK (status IN ('pending','paid','cancelled'));
+			`,
+		},
+		{
+			"chk_order_items_quantity",
+			`
+			ALTER TABLE order_items
+			ADD CONSTRAINT chk_order_items_quantity
+			CHECK (quantity > 0);
+			`,
+		},
+		{
+			"chk_order_items_price",
+			`
+			ALTER TABLE order_items
+			ADD CONSTRAINT chk_order_items_price
+			CHECK (price >= 0);
+			`,
+		},
+		{
+			"uq_order_items_order_product",
+			`
+			ALTER TABLE order_items
+			ADD CONSTRAINT uq_order_items_order_product
+			UNIQUE (order_id, product_id);
+			`,
+		},
+		{
+			"chk_notifications_status",
+			`
+			ALTER TABLE notifications
+			ADD CONSTRAINT chk_notifications_status
+			CHECK (status IN ('new','read'));
+			`,
+		},
+	}
+
+	for _, c := range constraints {
+		if err := addConstraintIfNotExists(db, c.name, c.sql); err != nil {
+			return err
 		}
 	}
 
