@@ -16,6 +16,6 @@ type Product struct {
 	UpdatedAt   *time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 
-	Category  MenuCategory `gorm:"foreignKey:CategoryID;references:ID"`
+	Category  *MenuCategory `gorm:"foreignKey:CategoryID;references:ID"`
 	Inventory *Inventory
 }
