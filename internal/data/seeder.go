@@ -23,7 +23,6 @@ func SeedAll(db *gorm.DB, logger *zap.Logger) error {
 
 func dataSeeds() []SeederFunc {
 	return []SeederFunc{
-		// Example
 		// entity.SeedUsers(),
 		seedCategories,
 		seedProducts,

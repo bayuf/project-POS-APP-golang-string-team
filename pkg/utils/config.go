@@ -26,6 +26,7 @@ type DatabaseCofig struct {
 	MaxIdle   int
 	MaxOpen   int
 	DBMigrate bool
+	DBSeeder  bool
 }
 
 func ReadConfiguration() (*Configuration, error) {

@@ -45,7 +45,13 @@ func main() {
 		}
 	}
 
-	// Seeder HERE
+	// Seeder
+	if config.DB.DBSeeder {
+		if err := data.SeedAll(dbPool, logger); err != nil {
+			logger.Error("cant seed database :", zap.Error(err))
+			log.Fatal("cant seed database :", err)
+		}
+	}
 
 	// init layer
 	repo := repository.NewRepository(dbPool, logger)
