@@ -5,8 +5,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type Repository struct{}
+type Repository struct {
+	UserRepository UserRepositoryIface
+}
 
 func NewRepository(db *gorm.DB, logger *zap.Logger) *Repository {
-	return &Repository{}
+	return &Repository{
+		UserRepository: NewUserRepository(db, logger),
+	}
 }

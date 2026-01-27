@@ -26,6 +26,7 @@ type DatabaseCofig struct {
 	MaxIdle   int
 	MaxOpen   int
 	DBMigrate bool
+	DBSeeder  bool
 }
 
 func ReadConfiguration() (*Configuration, error) {
@@ -65,6 +66,7 @@ func ReadConfiguration() (*Configuration, error) {
 			MaxIdle:   viper.GetInt("DATABASE_MAX_IDLE_CONN"),
 			MaxOpen:   viper.GetInt("DATABASE_MAX_OPEN_CONN"),
 			DBMigrate: viper.GetBool("DATABASE_MIGRATE"),
+			DBSeeder:  viper.GetBool("DATABASE_MIGRATE_SEEDER"),
 		},
 	}, nil
 

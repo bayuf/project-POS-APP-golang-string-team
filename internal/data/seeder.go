@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/entity"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -24,8 +25,6 @@ func SeedAll(db *gorm.DB) error {
 
 func dataSeeds() []any {
 	return []any{
-		// Example
-		// entity.SeedUsers(),
-		// entity.SeedProducts(),
+		entity.SeedUsers(),
 	}
 }

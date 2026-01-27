@@ -6,8 +6,12 @@ import (
 	"go.uber.org/zap"
 )
 
-type Adaptor struct{}
+type Adaptor struct {
+	*UserHandler
+}
 
 func NewAdaptor(uc *usecase.UseCase, logger *zap.Logger, config *utils.Configuration) *Adaptor {
-	return &Adaptor{}
+	return &Adaptor{
+		UserHandler: NewUserHandler(uc.UserService, logger, config),
+	}
 }

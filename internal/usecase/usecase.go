@@ -5,8 +5,12 @@ import (
 	"go.uber.org/zap"
 )
 
-type UseCase struct{}
+type UseCase struct {
+	*UserService
+}
 
 func NewUseCase(repo *repository.Repository, logger *zap.Logger) *UseCase {
-	return &UseCase{}
+	return &UseCase{
+		UserService: NewUserService(repo.UserRepository, logger),
+	}
 }
