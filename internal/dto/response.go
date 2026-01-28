@@ -45,3 +45,9 @@ type Session struct {
 	UserID    uuid.UUID `json:"user_id"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
+
+type ValidateSession struct {
+	SessionID uuid.UUID
+	UserID    uuid.UUID
+	Role      string
+}

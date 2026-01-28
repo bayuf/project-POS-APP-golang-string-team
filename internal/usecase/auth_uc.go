@@ -16,7 +16,6 @@ import (
 type AuthService struct {
 	repo   repository.AuthRepositoryIface
 	logger *zap.Logger
-	// tx     *gorm.Tx
 }
 
 func NewAuthService(repo repository.AuthRepositoryIface, logger *zap.Logger) *AuthService {
@@ -55,6 +54,7 @@ func (uc *AuthService) Login(ctx context.Context, data dto.Login) (*dto.Session,
 		return nil, err
 	}
 
+	// get latest session
 	session, err := uc.repo.GetSession(ctx, *id)
 	if err != nil {
 		return nil, err

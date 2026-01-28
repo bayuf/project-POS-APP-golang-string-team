@@ -11,7 +11,6 @@ type Session struct {
 	UserID    uuid.UUID `gorm:"not null"`
 	ExpiredAt time.Time `gorm:"not null"`
 	RevokedAt *time.Time
-	UsedAt    *time.Time
 
 	CreatedAt time.Time `gorm:"not null"`
 
