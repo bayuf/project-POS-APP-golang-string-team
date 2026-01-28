@@ -47,7 +47,7 @@ func main() {
 
 	// Seeder
 	if config.DB.DBSeeder {
-		if err := data.SeedAll(dbPool); err != nil {
+		if err := data.SeedAll(dbPool, logger); err != nil {
 			logger.Error("cant seed database :", zap.Error(err))
 			log.Fatal("cant seed database :", err)
 		}

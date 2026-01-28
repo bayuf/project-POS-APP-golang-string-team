@@ -56,4 +56,26 @@ type CodeOTP struct {
 	OTPToken  *uuid.UUID `json:"otp_token,omitempty"`
 	Code      *string    `json:"code,omitempty"`
 	ExpiredAt time.Time  `json:"expired_at"`
+type Category struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+// Category
+type Categorys struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+type Product struct {
+	ID          int64   `json:"id"`
+	Name        string  `json:"name"`
+	Price       float64 `json:"price"`
+	IsAvailable bool    `json:"is_available"`
+
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt *time.Time `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at"`
+
+	Category *Category `json:"category,omitempty"`
 }

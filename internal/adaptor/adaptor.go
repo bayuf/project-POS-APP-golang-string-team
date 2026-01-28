@@ -7,12 +7,16 @@ import (
 )
 
 type Adaptor struct {
+	Category *CategoryHandler
+	Products *ProductHandler
 	*UserHandler
 	*AuthHandler
 }
 
 func NewAdaptor(uc *usecase.UseCase, logger *zap.Logger, config *utils.Configuration) *Adaptor {
 	return &Adaptor{
+		Category: NewCategoryHandler(uc),
+		Products: NewProductHandler(uc),
 		UserHandler: NewUserHandler(uc.UserService, logger, config),
 		AuthHandler: NewAuthHandler(uc.AuthService, logger, config),
 	}

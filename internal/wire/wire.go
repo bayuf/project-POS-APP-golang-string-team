@@ -1,6 +1,8 @@
 package wire
 
 import (
+	"net/http"
+
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/adaptor"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/repository"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/usecase"
@@ -20,11 +22,19 @@ func Wiring(tx *gorm.DB, repo *repository.Repository, logger *zap.Logger, config
 	authMW := middleware.NewAuthMiddleware(repo, logger)
 
 	router := gin.Default() // use default middleware
+
+	router.GET("/", func(c *gin.Context) {
+		utils.ResponseSuccess(c, http.StatusOK, "OK", gin.H{
+			"message": "System POST API Successfully Running",
+		})
+	})
+
 	r1 := router.Group("/api/v1")
 
 	// Wiring Routes
 	wireUser(r1, adaptor, authMW)
 	wireAuth(r1, adaptor, authMW)
+	wireMenuManagement(r1, adaptor)
 
 	return router
 }
@@ -48,4 +58,25 @@ func wireAuth(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.
 	auth.POST("/reset-password", adaptor.ResetPassword)
 	auth.Use(mw.SessionAuthMiddleware())
 	auth.POST("/logout", adaptor.Logout)
+}
+
+func wireMenuManagement(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
+	menu := router.Group("/menu")
+	{
+		categories := menu.Group("/categories")
+		{
+			categories.GET("", adaptor.Category.GetAllCategories) // path "/"
+			categories.GET("/:id", adaptor.Category.GetCategoryById)
+			categories.PUT("/:id", adaptor.Category.UpdateCategoryId)
+			categories.POST("", adaptor.Category.CreateCategory)
+		}
+
+		products := menu.Group("/products")
+		{
+			products.GET("", adaptor.Products.GetAllProducts)
+			products.GET("/:id", adaptor.Products.GetProductId)
+			products.POST("", adaptor.Products.CreateProduct)
+			products.GET("/category/:name", adaptor.Products.GetProductsByCategoryName)
+		}
+	}
 }

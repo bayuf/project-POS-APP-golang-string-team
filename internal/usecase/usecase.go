@@ -7,12 +7,14 @@ import (
 )
 
 type UseCase struct {
+	repo repository.Repository
 	*UserService
 	*AuthService
 }
 
 func NewUseCase(repo *repository.Repository, logger *zap.Logger, tx *gorm.DB) *UseCase {
 	return &UseCase{
+		repo: *repo,
 		UserService: NewUserService(repo.UserRepository, logger),
 		AuthService: NewAuthService(repo.AuthRepository, logger, tx),
 	}

@@ -52,4 +52,14 @@ type UpdatePassword struct {
 	Token           uuid.UUID `json:"token" binding:"required"`
 	NewPassword     string    `json:"new_password" binding:"required,min=5"`
 	ConfirmPassword string    `json:"confirm_password" binding:"required,min=5"`
+type CreateCategory struct {
+	Name string `json:"name" binding:"required"`
+}
+
+// PRODUCT
+type CreateProduct struct {
+	CategoryID  int64   `json:"category_id" binding:"required"`
+	Name        string  `json:"name" binding:"required"`
+	Price       float64 `json:"price" binding:"required,gte=0"`
+	IsAvailable *bool   `json:"is_available,omitempty"`
 }
