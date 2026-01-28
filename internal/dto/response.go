@@ -39,11 +39,29 @@ type UserLists struct {
 	Timing    string    `json:"timing,omitempty"`
 }
 
+// Auth
+type Session struct {
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
+type ValidateSession struct {
+	SessionID uuid.UUID
+	UserID    uuid.UUID
+	Role      string
+}
+
+type CodeOTP struct {
+	OTPToken  *uuid.UUID `json:"otp_token,omitempty"`
+	Code      *string    `json:"code,omitempty"`
+	ExpiredAt time.Time  `json:"expired_at"`
 type Category struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
 }
 
+// Category
 type Categorys struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
