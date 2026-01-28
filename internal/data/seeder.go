@@ -23,7 +23,7 @@ func SeedAll(db *gorm.DB, logger *zap.Logger) error {
 
 func dataSeeds() []SeederFunc {
 	return []SeederFunc{
-		entity.SeedUsers(),
+		// entity.SeedUsers(),
 		seedCategories,
 		seedProducts,
 	}
@@ -53,7 +53,6 @@ func seedCategories(db *gorm.DB, logger *zap.Logger) error {
 }
 
 func seedProducts(db *gorm.DB, logger *zap.Logger) error {
-	// Get categories
 	var categories []entity.MenuCategory
 	if err := db.Find(&categories).Error; err != nil {
 		return err
@@ -62,9 +61,6 @@ func seedProducts(db *gorm.DB, logger *zap.Logger) error {
 	categoryMap := make(map[string]int64)
 	for _, cat := range categories {
 		categoryMap[cat.Name] = cat.ID
-func dataSeeds() []any {
-	return []any{
-		entity.SeedUsers(),
 	}
 
 	products := []entity.Product{

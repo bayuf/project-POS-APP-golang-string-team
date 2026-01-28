@@ -34,3 +34,14 @@ type UserFilterRequest struct {
 	Limit  int    `form:"limit" binding:"min=1,max=100"`
 	SortBy string `form:"sort_by"`
 }
+
+type CreateCategory struct {
+	Name string `json:"name" binding:"required"`
+}
+
+type CreateProduct struct {
+	CategoryID  int64   `json:"category_id" binding:"required"`
+	Name        string  `json:"name" binding:"required"`
+	Price       float64 `json:"price" binding:"required,gte=0"`
+	IsAvailable *bool   `json:"is_available,omitempty"`
+}

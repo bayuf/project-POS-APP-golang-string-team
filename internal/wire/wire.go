@@ -46,11 +46,17 @@ func wireMenuManagement(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 		categories := menu.Group("/categories")
 		{
 			categories.GET("", adaptor.Category.GetAllCategories) // path "/"
+			categories.GET("/:id", adaptor.Category.GetCategoryById)
+			categories.PUT("/:id", adaptor.Category.UpdateCategoryId)
+			categories.POST("", adaptor.Category.CreateCategory)
 		}
 
 		products := menu.Group("/products")
 		{
 			products.GET("", adaptor.Products.GetAllProducts)
+			products.GET("/:id", adaptor.Products.GetProductId)
+			products.POST("", adaptor.Products.CreateProduct)
+			products.GET("/category/:name", adaptor.Products.GetProductsByCategoryName)
 		}
 	}
 }

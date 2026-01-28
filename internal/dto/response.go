@@ -38,3 +38,26 @@ type UserLists struct {
 	AvatarURL string    `json:"avatar_url,omitempty"`
 	Timing    string    `json:"timing,omitempty"`
 }
+
+type Category struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+type Categorys struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+type Product struct {
+	ID          int64   `json:"id"`
+	Name        string  `json:"name"`
+	Price       float64 `json:"price"`
+	IsAvailable bool    `json:"is_available"`
+
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt *time.Time `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at"`
+
+	Category *Category `json:"category,omitempty"`
+}
