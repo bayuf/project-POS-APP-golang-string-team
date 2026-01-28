@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/entity"
@@ -21,8 +22,8 @@ type AuthRepositoryIface interface {
 	AddOTP(ctx context.Context, newOTP entity.OTPRequest) error
 	GetOTPByID(ctx context.Context, id uuid.UUID) (*entity.OTPRequest, error)
 	GetOTPByUserID(ctx context.Context, id uuid.UUID) (*entity.OTPRequest, error)
-	UpdateOTPStatus(ctx context.Context, userID uuid.UUID) error
-	UpdatePasswordUser(ctx context.Context, user entity.User) error
+	UpdateOTPStatus(ctx context.Context, tx *gorm.DB, userID uuid.UUID) error
+	UpdatePasswordUser(ctx context.Context, tx *gorm.DB, user entity.User) error
 }
 
 type AuthRepository struct {
@@ -152,6 +153,7 @@ func (r *AuthRepository) GetOTPByUserID(ctx context.Context, id uuid.UUID) (*ent
 		Where("user_id = ?", id).
 		Where("expired_at > ?", time.Now()).
 		Where("is_used = ?", false).
+		Order("created_at DESC").
 		First(&otp).Error; err != nil {
 		r.logger.Error("failed to get otp", zap.Error(err))
 		return nil, err
@@ -160,28 +162,39 @@ func (r *AuthRepository) GetOTPByUserID(ctx context.Context, id uuid.UUID) (*ent
 	return &otp, nil
 }
 
-func (r *AuthRepository) UpdateOTPStatus(ctx context.Context, userID uuid.UUID) error {
-	if err := r.db.WithContext(ctx).
+func (r *AuthRepository) UpdateOTPStatus(ctx context.Context, tx *gorm.DB, userID uuid.UUID) error {
+	res := tx.WithContext(ctx).
 		Model(&entity.OTPRequest{}).
 		Where("user_id = ?", userID).
 		Where("is_used = ?", false).
-		Update("is_used", true).Error; err != nil {
-		r.logger.Error("failed to update otp status", zap.Error(err))
-		return err
+		Update("is_used", true)
+
+	if res.Error != nil {
+		r.logger.Error("failed to update otp status", zap.Error(res.Error))
+		return res.Error
+	}
+
+	if res.RowsAffected < 1 {
+		return errors.New("otp not found")
 	}
 
 	return nil
 }
 
-func (r *AuthRepository) UpdatePasswordUser(ctx context.Context, user entity.User) error {
-	if err := r.db.WithContext(ctx).
+func (r *AuthRepository) UpdatePasswordUser(ctx context.Context, tx *gorm.DB, user entity.User) error {
+	res := tx.WithContext(ctx).
 		Model(&user).
 		Where("id = ?", user.ID).
 		Where("is_active = ?", true).
-		Update("password_hash", user.PasswordHash).
-		Error; err != nil {
-		r.logger.Error("failed to update password", zap.Error(err))
-		return err
+		Update("password_hash", user.PasswordHash)
+
+	if res.Error != nil {
+		r.logger.Error("failed to update password", zap.Error(res.Error))
+		return res.Error
+	}
+
+	if res.RowsAffected < 1 {
+		return errors.New("user not found")
 	}
 
 	return nil

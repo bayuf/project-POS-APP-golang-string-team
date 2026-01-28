@@ -64,3 +64,66 @@ func (ad *AuthHandler) Logout(c *gin.Context) {
 
 	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
 }
+
+func (ad *AuthHandler) GetOtpResetPassword(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	data := struct {
+		Email string `json:"email" binding:"required,email"`
+	}{}
+
+	if err := c.BindJSON(&data); err != nil {
+		ad.logger.Error("failed to bind json", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	code, err := ad.uc.ForgetPassword(ctx, data.Email)
+	if err != nil {
+		ad.logger.Error("failed to get otp reset password", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", code)
+}
+
+func (ad *AuthHandler) GetSessionResetPassword(c *gin.Context) {
+	ctx := c.Request.Context()
+	otpData := dto.VerifyOTP{}
+
+	if err := c.BindJSON(&otpData); err != nil {
+		ad.logger.Error("failed to bind json", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	data, err := ad.uc.VerifyOTP(ctx, otpData)
+	if err != nil {
+		ad.logger.Error("failed to reset password", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", data)
+}
+
+func (ad *AuthHandler) ResetPassword(c *gin.Context) {
+	ctx := c.Request.Context()
+	resetData := dto.UpdatePassword{}
+
+	if err := c.BindJSON(&resetData); err != nil {
+		ad.logger.Error("failed to bind json", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	err := ad.uc.UpdateUserPassword(ctx, resetData)
+	if err != nil {
+		ad.logger.Error("failed to reset password", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
+}

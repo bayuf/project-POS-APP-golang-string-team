@@ -8,11 +8,12 @@ import (
 	"github.com/bayuf/project-POS-APP-golang-string-team/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
-func Wiring(repo *repository.Repository, logger *zap.Logger, config *utils.Configuration) *gin.Engine {
+func Wiring(tx *gorm.DB, repo *repository.Repository, logger *zap.Logger, config *utils.Configuration) *gin.Engine {
 	// init usecase and adaptor
-	uc := usecase.NewUseCase(repo, logger)
+	uc := usecase.NewUseCase(repo, logger, tx)
 	adaptor := adaptor.NewAdaptor(uc, logger, config)
 
 	// init middleware
@@ -42,6 +43,9 @@ func wireUser(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.
 func wireAuth(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.AuthMiddleware) {
 	auth := router.Group("/auth")
 	auth.POST("/login", adaptor.Login)
+	auth.POST("/forget-password", adaptor.GetOtpResetPassword)
+	auth.POST("/verify-otp", adaptor.GetSessionResetPassword)
+	auth.POST("/reset-password", adaptor.ResetPassword)
 	auth.Use(mw.SessionAuthMiddleware())
 	auth.POST("/logout", adaptor.Logout)
 }

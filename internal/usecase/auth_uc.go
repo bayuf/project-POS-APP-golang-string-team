@@ -11,17 +11,20 @@ import (
 	"github.com/bayuf/project-POS-APP-golang-string-team/pkg/utils"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 type AuthService struct {
 	repo   repository.AuthRepositoryIface
 	logger *zap.Logger
+	tx     *gorm.DB
 }
 
-func NewAuthService(repo repository.AuthRepositoryIface, logger *zap.Logger) *AuthService {
+func NewAuthService(repo repository.AuthRepositoryIface, logger *zap.Logger, tx *gorm.DB) *AuthService {
 	return &AuthService{
 		repo:   repo,
 		logger: logger,
+		tx:     tx,
 	}
 }
 
@@ -112,7 +115,8 @@ func (uc *AuthService) ForgetPassword(ctx context.Context, email string) (*dto.C
 	}
 
 	return &dto.CodeOTP{
-		Code:      code,
+		// OTPToken:  nil,
+		Code:      &code,
 		ExpiredAt: otpData.ExpiredAt,
 	}, nil
 }
@@ -135,13 +139,8 @@ func (uc *AuthService) VerifyOTP(ctx context.Context, otp dto.VerifyOTP) (*dto.C
 		return nil, errors.New("invalid otp")
 	}
 
-	// update OTP status
-	if err := uc.repo.UpdateOTPStatus(ctx, otpData.UserID); err != nil {
-		return nil, err
-	}
-
 	return &dto.CodeOTP{
-		OTPToken:  otpData.ID,
+		OTPToken:  &otpData.ID,
 		ExpiredAt: otpData.ExpiredAt,
 	}, nil
 }
@@ -164,9 +163,22 @@ func (uc *AuthService) UpdateUserPassword(ctx context.Context, pass dto.UpdatePa
 		return err
 	}
 
-	// update user password
-	if err := uc.repo.UpdatePasswordUser(ctx, entity.User{
-		PasswordHash: hashedPassword,
+	// Begin Transactions
+	if err = uc.tx.Transaction(func(tx *gorm.DB) error {
+		// update user password
+		if err := uc.repo.UpdatePasswordUser(ctx, tx, entity.User{
+			ID:           userOTP.UserID,
+			PasswordHash: hashedPassword,
+		}); err != nil {
+			return err
+		}
+
+		// update OTP status
+		if err := uc.repo.UpdateOTPStatus(ctx, tx, userOTP.UserID); err != nil {
+			return err
+		}
+
+		return nil
 	}); err != nil {
 		return err
 	}

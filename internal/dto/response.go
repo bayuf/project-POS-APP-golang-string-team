@@ -53,7 +53,7 @@ type ValidateSession struct {
 }
 
 type CodeOTP struct {
-	OTPToken  uuid.UUID `json:"otp_token,omitempty"`
-	Code      string    `json:"code,omitempty"`
-	ExpiredAt time.Time `json:"expired_at"`
+	OTPToken  *uuid.UUID `json:"otp_token,omitempty"`
+	Code      *string    `json:"code,omitempty"`
+	ExpiredAt time.Time  `json:"expired_at"`
 }
