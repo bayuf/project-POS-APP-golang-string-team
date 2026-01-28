@@ -56,12 +56,14 @@ type CodeOTP struct {
 	OTPToken  *uuid.UUID `json:"otp_token,omitempty"`
 	Code      *string    `json:"code,omitempty"`
 	ExpiredAt time.Time  `json:"expired_at"`
+}
+
+// Category
 type Category struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
 }
 
-// Category
 type Categorys struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`

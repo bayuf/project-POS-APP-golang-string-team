@@ -52,6 +52,8 @@ type UpdatePassword struct {
 	Token           uuid.UUID `json:"token" binding:"required"`
 	NewPassword     string    `json:"new_password" binding:"required,min=5"`
 	ConfirmPassword string    `json:"confirm_password" binding:"required,min=5"`
+}
+
 type CreateCategory struct {
 	Name string `json:"name" binding:"required"`
 }
