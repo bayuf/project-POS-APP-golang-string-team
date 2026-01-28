@@ -22,14 +22,14 @@ func Wiring(repo *repository.Repository, logger *zap.Logger, config *utils.Confi
 	r1 := router.Group("/api/v1")
 
 	// Wiring Routes
-	wireUser(r1, adaptor, *authMW)
-	wireAuth(r1, adaptor)
+	wireUser(r1, adaptor, authMW)
+	wireAuth(r1, adaptor, authMW)
 
 	return router
 }
 
 // All Route Here
-func wireUser(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw middleware.AuthMiddleware) {
+func wireUser(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.AuthMiddleware) {
 	users := router.Group("/users")
 	users.Use(mw.SessionAuthMiddleware(), mw.RequireRoles("superadmin", "admin"))
 	users.GET("", adaptor.GetAllUsers)
@@ -39,6 +39,9 @@ func wireUser(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw middleware.A
 	users.POST("", adaptor.CreateUser)
 }
 
-func wireAuth(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
-	router.POST("/auth/login", adaptor.Login)
+func wireAuth(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.AuthMiddleware) {
+	auth := router.Group("/auth")
+	auth.POST("/login", adaptor.Login)
+	auth.Use(mw.SessionAuthMiddleware())
+	auth.POST("/logout", adaptor.Logout)
 }

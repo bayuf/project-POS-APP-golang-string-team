@@ -51,3 +51,9 @@ type ValidateSession struct {
 	UserID    uuid.UUID
 	Role      string
 }
+
+type CodeOTP struct {
+	OTPToken  uuid.UUID `json:"otp_token,omitempty"`
+	Code      string    `json:"code,omitempty"`
+	ExpiredAt time.Time `json:"expired_at"`
+}

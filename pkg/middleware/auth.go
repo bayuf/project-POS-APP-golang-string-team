@@ -34,8 +34,8 @@ func NewAuthMiddleware(repo *repository.Repository, log *zap.Logger) *AuthMiddle
 	}
 }
 
-func GetAuthUser(r *gin.Context) (*AuthUser, bool) {
-	user, ok := r.Get(authUserKey)
+func GetAuthUser(c *gin.Context) (*AuthUser, bool) {
+	user, ok := c.Get(authUserKey)
 	return user.(*AuthUser), ok
 }
 

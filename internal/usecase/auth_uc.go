@@ -66,3 +66,110 @@ func (uc *AuthService) Login(ctx context.Context, data dto.Login) (*dto.Session,
 		ExpiresAt: session.ExpiredAt,
 	}, nil
 }
+
+func (uc *AuthService) Logout(ctx context.Context, sessionID uuid.UUID) error {
+	return uc.repo.RevokeSessionBySessionId(ctx, sessionID)
+}
+
+func (uc *AuthService) ForgetPassword(ctx context.Context, email string) (*dto.CodeOTP, error) {
+	// get user
+	user, err := uc.repo.GetUserByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+
+	// cek user valid
+	if user == nil {
+		return nil, errors.New("user not found")
+	}
+
+	// generate code otp
+	code, err := utils.GenerateOTP()
+	if err != nil {
+		return nil, err
+	}
+
+	hashedCode, err := utils.HashString(code)
+	if err != nil {
+		return nil, err
+	}
+
+	// add OTP to db
+	idOTP := uuid.New()
+	if err := uc.repo.AddOTP(ctx, entity.OTPRequest{
+		ID:        idOTP,
+		UserID:    user.ID,
+		OTPHash:   hashedCode,
+		ExpiredAt: time.Now().Add(5 * time.Minute),
+	}); err != nil {
+		return nil, err
+	}
+
+	// get OTP Data
+	otpData, err := uc.repo.GetOTPByID(ctx, idOTP)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.CodeOTP{
+		Code:      code,
+		ExpiredAt: otpData.ExpiredAt,
+	}, nil
+}
+
+func (uc *AuthService) VerifyOTP(ctx context.Context, otp dto.VerifyOTP) (*dto.CodeOTP, error) {
+	// get user
+	user, err := uc.repo.GetUserByEmail(ctx, otp.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	// get OTP Data
+	otpData, err := uc.repo.GetOTPByUserID(ctx, user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// cek OTP
+	if !utils.CheckString(otpData.OTPHash, otp.OTPCode) {
+		return nil, errors.New("invalid otp")
+	}
+
+	// update OTP status
+	if err := uc.repo.UpdateOTPStatus(ctx, otpData.UserID); err != nil {
+		return nil, err
+	}
+
+	return &dto.CodeOTP{
+		OTPToken:  otpData.ID,
+		ExpiredAt: otpData.ExpiredAt,
+	}, nil
+}
+
+func (uc *AuthService) UpdateUserPassword(ctx context.Context, pass dto.UpdatePassword) error {
+	// get user
+	userOTP, err := uc.repo.GetOTPByID(ctx, pass.Token)
+	if err != nil {
+		return err
+	}
+
+	// cek user valid
+	if userOTP == nil {
+		return errors.New("token OTP invalid")
+	}
+
+	// generate password hash
+	hashedPassword, err := utils.HashString(pass.ConfirmPassword)
+	if err != nil {
+		return err
+	}
+
+	// update user password
+	if err := uc.repo.UpdatePasswordUser(ctx, entity.User{
+		PasswordHash: hashedPassword,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}

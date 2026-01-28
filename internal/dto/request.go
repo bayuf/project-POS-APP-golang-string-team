@@ -1,5 +1,7 @@
 package dto
 
+import "github.com/google/uuid"
+
 // USER
 type CreateUser struct {
 	Name             string  `json:"name" binding:"required"`
@@ -39,4 +41,15 @@ type UserFilterRequest struct {
 type Login struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=5"`
+}
+
+type VerifyOTP struct {
+	Email   string `json:"email" binding:"required,email"`
+	OTPCode string `json:"otp_code" binding:"required"`
+}
+
+type UpdatePassword struct {
+	Token           uuid.UUID `json:"token" binding:"required"`
+	NewPassword     string    `json:"new_password" binding:"required,min=5"`
+	ConfirmPassword string    `json:"confirm_password" binding:"required,min=5"`
 }
