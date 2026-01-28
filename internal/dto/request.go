@@ -54,11 +54,11 @@ type UpdatePassword struct {
 	ConfirmPassword string    `json:"confirm_password" binding:"required,min=5"`
 }
 
+// PRODUCT
 type CreateCategory struct {
 	Name string `json:"name" binding:"required"`
 }
 
-// PRODUCT
 type CreateProduct struct {
 	CategoryID  int64   `json:"category_id" binding:"required"`
 	Name        string  `json:"name" binding:"required"`
