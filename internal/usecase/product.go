@@ -6,35 +6,46 @@ import (
 	"math"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/entity"
+	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/repository"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/dto"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
-func (u UseCase) CreateProduct(ctx context.Context, req dto.CreateProduct) (*entity.Product, error) {
+type ProductService struct {
+	repo   repository.ProductsRepository
+	logger *zap.Logger
+}
 
-	category, err := u.repo.CategoryRepo.FindById(ctx, req.CategoryID)
-	if err != nil {
-		return nil, err
+func NewProductService(repo repository.ProductsRepository, logger *zap.Logger, tx *gorm.DB) *ProductService {
+	return &ProductService{
+		repo:   repo,
+		logger: logger,
 	}
-	if category == nil {
-		return nil, errors.New("category not found")
-	}
+}
 
-	product := &entity.Product{
-		CategoryID:  req.CategoryID,
-		Name:        req.Name,
-		Price:       req.Price,
-		IsAvailable: true,
-	}
+func (u *UseCase) CreateProduct(ctx context.Context, req dto.CreateProduct) error {
+	return u.tx.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
-	if req.IsAvailable != nil {
-		product.IsAvailable = *req.IsAvailable
-	}
+		repo := repository.NewProductsRepository(tx, u.log)
 
-	if err := u.repo.ProductRepo.Create(product); err != nil {
-		return nil, err
-	}
+		exist, err := repo.IsProductExists(ctx, req.Name)
+		if err != nil {
+			return err
+		}
+		if exist != nil {
+			return errors.New("product already exists")
+		}
 
-	return product, nil
+		product := &entity.Product{
+			Name:        req.Name,
+			Price:       req.Price,
+			CategoryID:  req.CategoryID,
+			IsAvailable: true,
+		}
+
+		return repo.Create(ctx, product)
+	})
 }
 
 func (u UseCase) FindAllProducts(page, limit int, categoryID *uint) ([]entity.Product, dto.Pagination, error) {
@@ -45,7 +56,7 @@ func (u UseCase) FindAllProducts(page, limit int, categoryID *uint) ([]entity.Pr
 		limit = 10
 	}
 
-	products, total, err := u.repo.ProductRepo.FindAll(page, limit, categoryID)
+	products, total, err := u.repo.ProductRepo.FindAll(context.Background(), page, limit, categoryID)
 	if err != nil {
 		return nil, dto.Pagination{}, err
 	}
@@ -87,6 +98,37 @@ func (u UseCase) FindProductById(ctx context.Context, id int64) (*dto.Product, e
 		IsAvailable: product.IsAvailable,
 		Category:    category,
 	}, nil
+}
+
+func (u UseCase) DeleteProductById(ctx context.Context, id int64) error {
+	return u.repo.ProductRepo.SoftDeleteById(ctx, id)
+}
+
+func (u UseCase) UpdateProductById(ctx context.Context, id int64, req dto.CreateProduct) (*entity.Product, error) {
+	existProd, err := u.repo.ProductRepo.FindById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if existProd == nil {
+		return nil, errors.New("product id not found")
+	}
+
+	checkUniqNameProd, err := u.repo.ProductRepo.IsProductExists(ctx, req.Name)
+	if err != nil {
+		return nil, err
+	}
+	if checkUniqNameProd != nil && checkUniqNameProd.ID != id {
+		return nil, errors.New("product name already exists")
+	}
+
+	updateProd := &entity.Product{
+		CategoryID:  req.CategoryID,
+		Name:        req.Name,
+		Price:       req.Price,
+		IsAvailable: true,
+	}
+
+	return u.repo.ProductRepo.UpdateProductId(ctx, id, updateProd)
 }
 
 func (u UseCase) FindProductsByCategoryName(ctx context.Context, name string, page, limit int) ([]entity.Product, dto.Pagination, error) {

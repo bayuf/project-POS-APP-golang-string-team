@@ -186,3 +186,59 @@ func (h *CategoryHandler) UpdateCategoryId(c *gin.Context) {
 		updatedCategory,
 	)
 }
+
+func (h *CategoryHandler) DeleteCategoryById(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	idStr := c.Param("id")
+	if idStr == "" {
+		utils.ResponseFailed(
+			c,
+			http.StatusBadRequest,
+			"id category is required",
+			nil,
+		)
+		return
+	}
+
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		utils.ResponseFailed(
+			c,
+			http.StatusBadRequest,
+			"id category must be a number",
+			err.Error(),
+		)
+		return
+	}
+
+	err = h.usecase.DeleteCategory(ctx, id)
+	if err != nil {
+		status := http.StatusInternalServerError
+		message := "failed to delete category"
+
+		switch err.Error() {
+		case "category not found":
+			status = http.StatusNotFound
+			message = err.Error()
+		case "category still has active products":
+			status = http.StatusConflict
+			message = err.Error()
+		}
+
+		utils.ResponseFailed(
+			c,
+			status,
+			message,
+			err.Error(),
+		)
+		return
+	}
+
+	utils.ResponseSuccess(
+		c,
+		http.StatusOK,
+		"category deleted successfully",
+		nil,
+	)
+}

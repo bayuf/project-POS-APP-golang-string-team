@@ -65,18 +65,21 @@ func wireMenuManagement(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 	{
 		categories := menu.Group("/categories")
 		{
-			categories.GET("", adaptor.Category.GetAllCategories) // path "/"
-			categories.GET("/:id", adaptor.Category.GetCategoryById)
-			categories.PUT("/:id", adaptor.Category.UpdateCategoryId)
-			categories.POST("", adaptor.Category.CreateCategory)
+			categories.GET("", adaptor.CategoryHandler.GetAllCategories) // path "/"
+			categories.GET("/:id", adaptor.CategoryHandler.GetCategoryById)
+			categories.PUT("/:id", adaptor.CategoryHandler.UpdateCategoryId)
+			categories.DELETE("/:id", adaptor.CategoryHandler.DeleteCategoryById)
+			categories.POST("", adaptor.CategoryHandler.CreateCategory)
 		}
 
 		products := menu.Group("/products")
 		{
-			products.GET("", adaptor.Products.GetAllProducts)
-			products.GET("/:id", adaptor.Products.GetProductId)
-			products.POST("", adaptor.Products.CreateProduct)
-			products.GET("/category/:name", adaptor.Products.GetProductsByCategoryName)
+			products.GET("", adaptor.ProductsHandler.GetAllProducts)
+			products.GET("/:id", adaptor.ProductsHandler.GetProductId)
+			products.POST("", adaptor.ProductsHandler.CreateProduct)
+			products.PUT("/:id", adaptor.ProductsHandler.UpdateProductId)
+			products.DELETE("/:id", adaptor.ProductsHandler.DeleteProductId)
+			products.GET("/category/:name", adaptor.ProductsHandler.GetProductsByCategoryName)
 		}
 	}
 }
