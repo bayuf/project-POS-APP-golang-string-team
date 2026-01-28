@@ -6,7 +6,9 @@ import (
 	"math"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/entity"
+	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/repository"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/dto"
+	"gorm.io/gorm"
 )
 
 func (u UseCase) CreateCategory(ctx context.Context, req dto.CreateCategory) (*entity.MenuCategory, error) {
@@ -24,7 +26,7 @@ func (u UseCase) CreateCategory(ctx context.Context, req dto.CreateCategory) (*e
 		Name: req.Name,
 	}
 
-	if err := u.repo.CategoryRepo.Create(category); err != nil {
+	if err := u.repo.CategoryRepo.Create(ctx, category); err != nil {
 		return nil, err
 	}
 
@@ -39,7 +41,7 @@ func (u UseCase) FindAllCategories(page, limit int) ([]entity.MenuCategory, dto.
 		limit = 10
 	}
 
-	categories, total, err := u.repo.CategoryRepo.FindAll(page, limit)
+	categories, total, err := u.repo.CategoryRepo.FindAll(context.Background(), page, limit)
 	if err != nil {
 		return nil, dto.Pagination{}, err
 	}
@@ -94,4 +96,31 @@ func (u UseCase) UpdateCategoryId(ctx context.Context, id int64, req dto.CreateC
 	}
 
 	return u.repo.CategoryRepo.UpdateCategoryId(ctx, id, update)
+}
+
+func (u *UseCase) DeleteCategory(ctx context.Context, id int64) error {
+
+	return u.tx.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+
+		catRepo := repository.NewCategoryRepository(tx, u.log)
+		prodRepo := repository.NewProductsRepository(tx, u.log)
+
+		ctg, err := catRepo.FindById(ctx, id)
+		if err != nil {
+			return err
+		}
+		if ctg == nil {
+			return errors.New("category not found")
+		}
+
+		hasProd, err := prodRepo.HasActiveProducts(ctx, id)
+		if err != nil {
+			return err
+		}
+		if hasProd {
+			return errors.New("category still has active products")
+		}
+
+		return catRepo.DeleteCategoryId(ctx, id)
+	})
 }

@@ -23,8 +23,8 @@ func NewProductHandler(usc *usecase.UseCase) *ProductHandler {
 func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	var prod dto.CreateProduct
-	if err := c.ShouldBindJSON(&prod); err != nil {
+	var req dto.CreateProduct
+	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ResponseFailed(
 			c,
 			http.StatusBadRequest,
@@ -34,19 +34,15 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 		return
 	}
 
-	product, err := h.usecase.CreateProduct(ctx, prod)
-	if err != nil {
+	if err := h.usecase.CreateProduct(ctx, req); err != nil {
 		status := http.StatusInternalServerError
-		message := "failed to create product"
-
-		if err.Error() == "category not found" {
-			status = http.StatusBadRequest
+		if err.Error() == "product already exists" {
+			status = http.StatusConflict
 		}
-
 		utils.ResponseFailed(
 			c,
 			status,
-			message,
+			err.Error(),
 			err.Error(),
 		)
 		return
@@ -56,7 +52,7 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 		c,
 		http.StatusCreated,
 		"product created successfully",
-		product,
+		nil,
 	)
 }
 
@@ -133,6 +129,107 @@ func (h *ProductHandler) GetProductId(c *gin.Context) {
 		"success fetch product by id",
 		product,
 	)
+}
+
+func (h *ProductHandler) DeleteProductId(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	idStr := c.Param("id")
+	if idStr == "" {
+		utils.ResponseFailed(
+			c,
+			http.StatusBadRequest,
+			"failed to delete product by id",
+			"id product is required",
+		)
+		return
+	}
+
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		utils.ResponseFailed(
+			c,
+			http.StatusBadRequest,
+			"failed to delete product by id",
+			"id product must be a number",
+		)
+		return
+	}
+
+	product, err := h.usecase.FindProductById(ctx, id)
+	if err != nil || product == nil {
+		utils.ResponseFailed(
+			c,
+			http.StatusNotFound,
+			"failed to delete product by id",
+			"product not found",
+		)
+		return
+	}
+
+	// soft delete = is_available
+	if err := h.usecase.DeleteProductById(ctx, id); err != nil {
+		utils.ResponseFailed(
+			c,
+			http.StatusInternalServerError,
+			"failed to delete product by id",
+			err.Error(),
+		)
+		return
+	}
+
+	utils.ResponseSuccess(
+		c,
+		http.StatusOK,
+		"success delete product by id",
+		product,
+	)
+}
+
+func (h *ProductHandler) UpdateProductId(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	idStr := c.Param("id")
+	if idStr == "" {
+		utils.ResponseFailed(c, http.StatusBadRequest, "id product is required", nil)
+		return
+	}
+
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		utils.ResponseFailed(c, http.StatusBadRequest, "id product must be a number", nil)
+		return
+	}
+
+	// request payload
+	var req dto.CreateProduct
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ResponseFailed(c, http.StatusBadRequest, "invalid request body", err.Error())
+		return
+	}
+
+	if validationErrors, err := utils.ValidateErrors(req); err != nil {
+		utils.ResponseFailed(c, http.StatusBadRequest, "validation failed", validationErrors)
+		return
+	}
+
+	product, err := h.usecase.UpdateProductById(ctx, id, req)
+	if err != nil {
+		status := http.StatusInternalServerError
+		msg := "failed to update product"
+		if err.Error() == "product id not found" {
+			status = http.StatusNotFound
+			msg = err.Error()
+		} else if err.Error() == "product name already exists" {
+			status = http.StatusConflict
+			msg = err.Error()
+		}
+
+		utils.ResponseFailed(c, status, msg, err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "product updated successfully", product)
 }
 
 func (h *ProductHandler) GetProductsByCategoryName(c *gin.Context) {
