@@ -168,3 +168,17 @@ func (uc *UserService) GetAllUser(ctx context.Context, req dto.UserFilterRequest
 
 	return &userResponse, &pagination, nil
 }
+
+func (uc *UserService) GetUserProfile(ctx context.Context, userID uuid.UUID) (*dto.UserProfile, error) {
+	user, err := uc.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.UserProfile{
+		Name:      user.Name,
+		Role:      user.Role,
+		Address:   user.Address,
+		AvatarURL: user.AvatarURL,
+	}, nil
+}

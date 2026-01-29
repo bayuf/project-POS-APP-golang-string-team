@@ -39,6 +39,13 @@ type UserLists struct {
 	Timing    string    `json:"timing,omitempty"`
 }
 
+type UserProfile struct {
+	Name      string `json:"name"`
+	Role      string `json:"role"`
+	Address   string `json:"address"`
+	AvatarURL string `json:"avatar_url,omitempty"`
+}
+
 // Auth
 type Session struct {
 	ID        uuid.UUID `json:"id"`

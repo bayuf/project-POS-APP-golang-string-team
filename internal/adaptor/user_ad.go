@@ -6,6 +6,7 @@ import (
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/dto"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/usecase"
+	"github.com/bayuf/project-POS-APP-golang-string-team/pkg/middleware"
 	"github.com/bayuf/project-POS-APP-golang-string-team/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -144,4 +145,23 @@ func (h *UserHandler) GetAllUsers(c *gin.Context) {
 	}
 
 	utils.ResponsePagination(c, http.StatusOK, "success", users, *pagination)
+}
+
+func (h *UserHandler) GetMyProfile(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Must Login
+	user, ok := middleware.GetAuthUser(c)
+	if !ok {
+		utils.ResponseFailed(c, http.StatusUnauthorized, "failed", "user not found")
+		return
+	}
+
+	userProfile, err := h.uc.GetUserProfile(ctx, user.UserID)
+	if err != nil {
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", userProfile)
 }
