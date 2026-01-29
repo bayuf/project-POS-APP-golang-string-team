@@ -16,6 +16,7 @@ type UserRepositoryIface interface {
 	GetUserByID(ctx context.Context, ID uuid.UUID) (*entity.User, error)
 	UpdateUserByID(ctx context.Context, ID uuid.UUID, updatedUser entity.User) error
 	DeleteUserByID(ctx context.Context, ID uuid.UUID) error
+	GetAllAdmins(ctx context.Context) (*[]entity.User, error)
 }
 
 type UserRepository struct {
@@ -108,4 +109,32 @@ func (r *UserRepository) ListUser(ctx context.Context, f dto.UserFilterRequest) 
 	err := query.Limit(f.Limit).Offset(offset).Find(&users).Error
 
 	return &users, totalItems, err
+}
+
+func (r *UserRepository) UpdatePermissionByUserID(ctx context.Context, ID uuid.UUID, permissions map[string]bool) error {
+	if err := r.db.WithContext(ctx).
+		Model(&entity.User{}).
+		Where("id = ?", ID).
+		Update("permissions", permissions).
+		Error; err != nil {
+		r.logger.Error("failed to update user permissions by id", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (r *UserRepository) GetAllAdmins(ctx context.Context) (*[]entity.User, error) {
+	admins := []entity.User{}
+
+	if err := r.db.WithContext(ctx).
+		Model(&entity.User{}).
+		Where("role = ?", "admin").
+		Where("is_active = ?", true).
+		Find(&admins).
+		Error; err != nil {
+		return nil, err
+	}
+
+	return &admins, nil
 }

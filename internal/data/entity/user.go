@@ -1,6 +1,9 @@
 package entity
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/pkg/utils"
@@ -8,17 +11,42 @@ import (
 	"gorm.io/gorm"
 )
 
+type UserPermissions map[string]bool
+
+// Implementasi interface GORM agar bisa Scan/Value JSON
+func (p UserPermissions) Value() (driver.Value, error) {
+	return json.Marshal(p)
+}
+
+func (p *UserPermissions) Scan(value any) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("failed to unmarshal JSONB")
+	}
+	return json.Unmarshal(b, &p)
+}
+
+const (
+	PermissionDashboard = "dashboard"
+	PermissionReports   = "reports"
+	PermissionInventory = "inventory"
+	PermissionOrders    = "orders"
+	PermissionCustomers = "customers"
+	PermissionSettings  = "settings"
+)
+
 type User struct {
 	ID uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 
-	Name         string    `gorm:"size:100;not null"`
-	Email        string    `gorm:"size:100;not null;unique"`
-	PasswordHash string    `gorm:"type:text;not null;default:''"`
-	Phone        string    `gorm:"size:20;not null;default:''"`
-	Role         string    `gorm:"size:20;not null"` // superadmin, admin, staff
-	AvatarURL    string    `gorm:"size:255;not null;default:'public/img/user/default.jpg'"`
-	BirthDate    time.Time `gorm:"type:date"`
-	Salary       int64     `gorm:"not null;default:0"`
+	Name         string          `gorm:"size:100;not null"`
+	Email        string          `gorm:"size:100;not null;unique"`
+	PasswordHash string          `gorm:"type:text;not null;default:''"`
+	Phone        string          `gorm:"size:20;not null;default:''"`
+	Role         string          `gorm:"size:20;not null"` // superadmin, admin, staff
+	Permissions  UserPermissions `gorm:"type:jsonb;default:'{\"dashboard\":true}'"`
+	AvatarURL    string          `gorm:"size:255;not null;default:'public/img/user/default.jpg'"`
+	BirthDate    time.Time       `gorm:"type:date"`
+	Salary       int64           `gorm:"not null;default:0"`
 
 	ShiftStart string `gorm:"type:time"`
 	ShiftEnd   string `gorm:"type:time"`
@@ -50,12 +78,20 @@ func SeedUsers() []User {
 			PasswordHash: password,
 			Phone:        "089111111111",
 			Role:         "superadmin",
-			Address:      "Kab. Gresik",
-			BirthDate:    time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
-			Salary:       10000000,
-			IsActive:     true,
-			CreatedAt:    now,
-			UpdatedAt:    now,
+			Permissions: map[string]bool{
+				PermissionDashboard: true,
+				PermissionReports:   true,
+				PermissionInventory: true,
+				PermissionOrders:    true,
+				PermissionCustomers: true,
+				PermissionSettings:  true,
+			},
+			Address:   "Kab. Gresik",
+			BirthDate: time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
+			Salary:    10000000,
+			IsActive:  true,
+			CreatedAt: now,
+			UpdatedAt: now,
 		},
 		{
 			ID:           uuid.New(),
@@ -63,13 +99,21 @@ func SeedUsers() []User {
 			Email:        "bayu19fr@gmail.com",
 			PasswordHash: password,
 			Phone:        "089111111111",
-			Role:         "admin",
-			Address:      "Kab. Gresik",
-			BirthDate:    time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
-			Salary:       10000000,
-			IsActive:     true,
-			CreatedAt:    now,
-			UpdatedAt:    now,
+			Permissions: map[string]bool{
+				PermissionDashboard: true,
+				PermissionReports:   true,
+				PermissionInventory: true,
+				PermissionOrders:    true,
+				PermissionCustomers: true,
+				PermissionSettings:  false,
+			},
+			Role:      "admin",
+			Address:   "Kab. Gresik",
+			BirthDate: time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
+			Salary:    10000000,
+			IsActive:  true,
+			CreatedAt: now,
+			UpdatedAt: now,
 		},
 		{
 			ID:           uuid.New(),
@@ -78,12 +122,20 @@ func SeedUsers() []User {
 			PasswordHash: password,
 			Phone:        "089111111111",
 			Role:         "admin",
-			Address:      "Kota Jakarta",
-			BirthDate:    time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
-			Salary:       10000000,
-			IsActive:     true,
-			CreatedAt:    now,
-			UpdatedAt:    now,
+			Permissions: map[string]bool{
+				PermissionDashboard: true,
+				PermissionReports:   true,
+				PermissionInventory: true,
+				PermissionOrders:    true,
+				PermissionCustomers: true,
+				PermissionSettings:  false,
+			},
+			Address:   "Kota Jakarta",
+			BirthDate: time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
+			Salary:    10000000,
+			IsActive:  true,
+			CreatedAt: now,
+			UpdatedAt: now,
 		},
 		{
 			ID:           uuid.New(),
@@ -92,12 +144,20 @@ func SeedUsers() []User {
 			PasswordHash: password,
 			Phone:        "089111111111",
 			Role:         "admin",
-			Address:      "Kota Jakarta",
-			BirthDate:    time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
-			Salary:       10000000,
-			IsActive:     true,
-			CreatedAt:    now,
-			UpdatedAt:    now,
+			Permissions: map[string]bool{
+				PermissionDashboard: true,
+				PermissionReports:   true,
+				PermissionInventory: true,
+				PermissionOrders:    true,
+				PermissionCustomers: true,
+				PermissionSettings:  false,
+			},
+			Address:   "Kota Jakarta",
+			BirthDate: time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
+			Salary:    10000000,
+			IsActive:  true,
+			CreatedAt: now,
+			UpdatedAt: now,
 		},
 	}
 

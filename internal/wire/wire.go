@@ -42,7 +42,12 @@ func Wiring(tx *gorm.DB, repo *repository.Repository, logger *zap.Logger, config
 // All Route Here
 func wireUser(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.AuthMiddleware) {
 	users := router.Group("/users")
-	users.Use(mw.SessionAuthMiddleware(), mw.RequireRoles("superadmin", "admin"))
+	users.Use(mw.SessionAuthMiddleware())
+	users.GET("/profile", adaptor.GetMyProfile)
+	users.PATCH("/profile", adaptor.UpdateMyProfile)
+	users.GET("/admins", adaptor.GetAllAdmins)
+	users.PATCH("/permissions/:id", mw.RequireRoles("superadmin"), adaptor.UpdateUserPermissions)
+	users.Use(mw.RequireRoles("superadmin", "admin"))
 	users.GET("", adaptor.GetAllUsers)
 	users.GET("/:id", adaptor.GetUserByID)
 	users.PUT("/:id", adaptor.UpdateUser)

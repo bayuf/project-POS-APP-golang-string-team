@@ -6,6 +6,7 @@ import (
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/dto"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/usecase"
+	"github.com/bayuf/project-POS-APP-golang-string-team/pkg/middleware"
 	"github.com/bayuf/project-POS-APP-golang-string-team/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -144,4 +145,88 @@ func (h *UserHandler) GetAllUsers(c *gin.Context) {
 	}
 
 	utils.ResponsePagination(c, http.StatusOK, "success", users, *pagination)
+}
+
+func (h *UserHandler) GetMyProfile(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Must Login
+	user, ok := middleware.GetAuthUser(c)
+	if !ok {
+		utils.ResponseFailed(c, http.StatusUnauthorized, "failed", "user not found")
+		return
+	}
+
+	userProfile, err := h.uc.GetUserProfile(ctx, user.UserID)
+	if err != nil {
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", userProfile)
+}
+
+func (h *UserHandler) UpdateMyProfile(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Must Login
+	user, ok := middleware.GetAuthUser(c)
+	if !ok {
+		utils.ResponseFailed(c, http.StatusUnauthorized, "failed", "unauthorized")
+		return
+	}
+
+	newUserData := dto.UpdateUserProfile{}
+	if err := c.ShouldBindJSON(&newUserData); err != nil {
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	if newUserData.NewPassword != newUserData.ConfirmPassword {
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", "password not match")
+		return
+	}
+
+	if err := h.uc.UpdateProfile(ctx, user.UserID, newUserData); err != nil {
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
+}
+
+func (h *UserHandler) GetAllAdmins(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	admins, err := h.uc.GetAllAdmins(ctx)
+	if err != nil {
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", admins)
+}
+
+func (h *UserHandler) UpdateUserPermissions(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	userIdStr := c.Param("id")
+	userId, err := uuid.Parse(userIdStr)
+	if err != nil {
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	newPermissions := dto.UpdateUserPermissions{}
+	if err := c.ShouldBindJSON(&newPermissions); err != nil {
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	if err := h.uc.UpdatePermissions(ctx, userId, newPermissions.Permissions); err != nil {
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
 }

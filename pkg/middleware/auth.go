@@ -111,3 +111,31 @@ func (m *AuthMiddleware) RequireRoles(roles ...string) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func (m *AuthMiddleware) CheckPermission(permission string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user, ok := GetAuthUser(c)
+		if !ok {
+			utils.ResponseFailed(c, http.StatusUnauthorized, "unauthorized", nil)
+			c.Abort()
+			return
+		}
+
+		userData, err := m.repo.UserRepository.GetUserByID(c.Request.Context(), user.UserID)
+		if err != nil {
+			m.Logger.Error("failed to get user by id", zap.Error(err))
+			utils.ResponseFailed(c, http.StatusInternalServerError, "internal server error", nil)
+			c.Abort()
+			return
+		}
+
+		allowed, ok := userData.Permissions[permission]
+		if !ok || !allowed {
+			utils.ResponseFailed(c, http.StatusForbidden, "forbidden to access "+permission, nil)
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
