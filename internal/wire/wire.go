@@ -44,6 +44,7 @@ func wireUser(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.
 	users := router.Group("/users")
 	users.Use(mw.SessionAuthMiddleware())
 	users.GET("/profile", adaptor.GetMyProfile)
+	users.PATCH("/profile", adaptor.UpdateMyProfile)
 	users.Use(mw.RequireRoles("superadmin", "admin"))
 	users.GET("", adaptor.GetAllUsers)
 	users.GET("/:id", adaptor.GetUserByID)

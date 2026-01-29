@@ -118,6 +118,11 @@ func (ad *AuthHandler) ResetPassword(c *gin.Context) {
 		return
 	}
 
+	if resetData.NewPassword != resetData.ConfirmPassword {
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", "password and confirm password not match")
+		return
+	}
+
 	err := ad.uc.UpdateUserPassword(ctx, resetData)
 	if err != nil {
 		ad.logger.Error("failed to reset password", zap.Error(err))

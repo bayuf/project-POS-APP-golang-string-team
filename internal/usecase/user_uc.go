@@ -178,7 +178,38 @@ func (uc *UserService) GetUserProfile(ctx context.Context, userID uuid.UUID) (*d
 	return &dto.UserProfile{
 		Name:      user.Name,
 		Role:      user.Role,
+		Email:     user.Email,
 		Address:   user.Address,
 		AvatarURL: user.AvatarURL,
 	}, nil
+}
+
+func (uc *UserService) UpdateProfile(ctx context.Context, userID uuid.UUID, newUserData dto.UpdateUserProfile) error {
+	user, err := uc.GetUserByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return fmt.Errorf("user not found")
+	}
+
+	var hashedPassword string
+	if newUserData.NewPassword != "" {
+		var err error
+		hashedPassword, err = utils.HashString(newUserData.NewPassword)
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := uc.repo.UpdateUserByID(ctx, userID, entity.User{
+		Name:         newUserData.Name,
+		Email:        newUserData.Email,
+		Address:      newUserData.Address,
+		PasswordHash: hashedPassword,
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }

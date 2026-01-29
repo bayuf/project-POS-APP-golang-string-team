@@ -165,3 +165,32 @@ func (h *UserHandler) GetMyProfile(c *gin.Context) {
 
 	utils.ResponseSuccess(c, http.StatusOK, "success", userProfile)
 }
+
+func (h *UserHandler) UpdateMyProfile(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// Must Login
+	user, ok := middleware.GetAuthUser(c)
+	if !ok {
+		utils.ResponseFailed(c, http.StatusUnauthorized, "failed", "unauthorized")
+		return
+	}
+
+	newUserData := dto.UpdateUserProfile{}
+	if err := c.ShouldBindJSON(&newUserData); err != nil {
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	if newUserData.NewPassword != newUserData.ConfirmPassword {
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", "password not match")
+		return
+	}
+
+	if err := h.uc.UpdateProfile(ctx, user.UserID, newUserData); err != nil {
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
+}

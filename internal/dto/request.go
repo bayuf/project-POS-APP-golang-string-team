@@ -1,6 +1,8 @@
 package dto
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 // USER
 type CreateUser struct {
@@ -35,6 +37,14 @@ type UserFilterRequest struct {
 	Page   int    `form:"page" binding:"min=1"`
 	Limit  int    `form:"limit" binding:"min=1,max=100"`
 	SortBy string `form:"sort_by"`
+}
+
+type UpdateUserProfile struct {
+	Name            string `json:"name" binding:"omitempty"`
+	Email           string `json:"email" binding:"omitempty,email"`
+	Address         string `json:"address" binding:"omitempty"`
+	NewPassword     string `json:"new_password" binding:"omitempty,min=5"`
+	ConfirmPassword string `json:"confirm_password" binding:"omitempty,min=5"`
 }
 
 // AUTH

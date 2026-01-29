@@ -42,6 +42,7 @@ type UserLists struct {
 type UserProfile struct {
 	Name      string `json:"name"`
 	Role      string `json:"role"`
+	Email     string `json:"email"`
 	Address   string `json:"address"`
 	AvatarURL string `json:"avatar_url,omitempty"`
 }
