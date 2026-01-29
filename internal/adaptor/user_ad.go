@@ -194,3 +194,39 @@ func (h *UserHandler) UpdateMyProfile(c *gin.Context) {
 
 	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
 }
+
+func (h *UserHandler) GetAllAdmins(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	admins, err := h.uc.GetAllAdmins(ctx)
+	if err != nil {
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", admins)
+}
+
+func (h *UserHandler) UpdateUserPermissions(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	userIdStr := c.Param("id")
+	userId, err := uuid.Parse(userIdStr)
+	if err != nil {
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	newPermissions := dto.UpdateUserPermissions{}
+	if err := c.ShouldBindJSON(&newPermissions); err != nil {
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	if err := h.uc.UpdatePermissions(ctx, userId, newPermissions.Permissions); err != nil {
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
+}

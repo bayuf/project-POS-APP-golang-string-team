@@ -36,6 +36,20 @@ func (uc *UserService) CreateUser(ctx context.Context, newUser dto.CreateUser) e
 		return err
 	}
 
+	// default permissions
+	if newUser.Permissions == nil {
+		newUser.Permissions = map[string]bool{
+			entity.PermissionDashboard: true,
+			entity.PermissionReports:   false,
+			entity.PermissionInventory: false,
+			entity.PermissionOrders:    false,
+			entity.PermissionCustomers: false,
+			entity.PermissionSettings:  false,
+		}
+	}
+
+	permissions := entity.UserPermissions(newUser.Permissions)
+
 	if err := uc.repo.CreateUser(ctx, entity.User{
 		ID:               uuid.New(),
 		Name:             newUser.Name,
@@ -45,6 +59,7 @@ func (uc *UserService) CreateUser(ctx context.Context, newUser dto.CreateUser) e
 		Salary:           newUser.Salary,
 		PasswordHash:     hashedPassword,
 		Role:             newUser.Role,
+		Permissions:      permissions,
 		Address:          newUser.Address,
 		AdditionalDetail: newUser.AdditionalDetail,
 		AvatarURL:        *newUser.AvatarURL,
@@ -212,4 +227,45 @@ func (uc *UserService) UpdateProfile(ctx context.Context, userID uuid.UUID, newU
 	}
 
 	return nil
+}
+
+func (uc *UserService) UpdatePermissions(ctx context.Context, userID uuid.UUID, newPermissions map[string]bool) error {
+	user, err := uc.GetUserByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return fmt.Errorf("user not found")
+	}
+
+	if user.Role != "admin" {
+		return fmt.Errorf("only admin can update permissions")
+	}
+
+	if err := uc.repo.UpdateUserByID(ctx, userID, entity.User{
+		Permissions: newPermissions,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (uc *UserService) GetAllAdmins(ctx context.Context) ([]dto.ListAdmin, error) {
+	admins, err := uc.repo.GetAllAdmins(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var listAdmins []dto.ListAdmin
+	for _, admin := range *admins {
+		listAdmins = append(listAdmins, dto.ListAdmin{
+			ID:          admin.ID,
+			Name:        admin.Name,
+			Email:       admin.Email,
+			Permissions: admin.Permissions,
+		})
+	}
+
+	return listAdmins, nil
 }
