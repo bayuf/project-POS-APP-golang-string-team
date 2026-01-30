@@ -13,6 +13,7 @@ type UseCase struct {
 	*UserService
 	*AuthService
 	*ProductService
+	*InventoryService
 }
 
 func NewUseCase(repo *repository.Repository, logger *zap.Logger, tx *gorm.DB) *UseCase {
@@ -20,8 +21,9 @@ func NewUseCase(repo *repository.Repository, logger *zap.Logger, tx *gorm.DB) *U
 		log:  logger,
 		repo: *repo,
 
-		UserService:    NewUserService(repo.UserRepository, logger),
-		AuthService:    NewAuthService(repo.AuthRepository, logger, tx),
-		ProductService: NewProductService(repo.ProductRepo, logger, tx),
+		UserService:      NewUserService(repo.UserRepository, logger),
+		AuthService:      NewAuthService(repo.AuthRepository, logger, tx),
+		ProductService:   NewProductService(repo.ProductRepo, logger, tx),
+		InventoryService: NewInventoryService(repo.InventoryRepo, logger, tx),
 	}
 }

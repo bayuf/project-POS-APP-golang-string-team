@@ -15,16 +15,18 @@ import (
 type ProductService struct {
 	repo   repository.ProductsRepository
 	logger *zap.Logger
+	tx     *gorm.DB
 }
 
 func NewProductService(repo repository.ProductsRepository, logger *zap.Logger, tx *gorm.DB) *ProductService {
 	return &ProductService{
 		repo:   repo,
 		logger: logger,
+		tx:     tx,
 	}
 }
 
-func (u *UseCase) CreateProduct(ctx context.Context, req dto.CreateProduct) error {
+func (u *ProductService) CreateProduct(ctx context.Context, req dto.CreateProduct) error {
 	return u.tx.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
 		repo := repository.NewProductsRepository(tx, u.log)

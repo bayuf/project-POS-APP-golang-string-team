@@ -6,9 +6,7 @@ import (
 	"math"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/entity"
-	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/repository"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/dto"
-	"gorm.io/gorm"
 )
 
 func (u UseCase) CreateCategory(ctx context.Context, req dto.CreateCategory) (*entity.MenuCategory, error) {
@@ -99,28 +97,9 @@ func (u UseCase) UpdateCategoryId(ctx context.Context, id int64, req dto.CreateC
 }
 
 func (u *UseCase) DeleteCategory(ctx context.Context, id int64) error {
+	if err := u.repo.CategoryRepo.DeleteCategoryId(ctx, id); err != nil {
+		return err
+	}
 
-	return u.tx.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-
-		catRepo := repository.NewCategoryRepository(tx, u.log)
-		prodRepo := repository.NewProductsRepository(tx, u.log)
-
-		ctg, err := catRepo.FindById(ctx, id)
-		if err != nil {
-			return err
-		}
-		if ctg == nil {
-			return errors.New("category not found")
-		}
-
-		hasProd, err := prodRepo.HasActiveProducts(ctx, id)
-		if err != nil {
-			return err
-		}
-		if hasProd {
-			return errors.New("category still has active products")
-		}
-
-		return catRepo.DeleteCategoryId(ctx, id)
-	})
+	return nil
 }
