@@ -2,6 +2,7 @@ package wire
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/adaptor"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/repository"
@@ -13,9 +14,23 @@ import (
 	"gorm.io/gorm"
 )
 
-func Wiring(tx *gorm.DB, repo *repository.Repository, logger *zap.Logger, config *utils.Configuration) *gin.Engine {
+type App struct {
+	Route *gin.Engine
+	Stop  chan struct{}
+	WG    *sync.WaitGroup
+}
+
+func Wiring(tx *gorm.DB, repo *repository.Repository, logger *zap.Logger, config *utils.Configuration) *App {
+	// init worker
+	emailJobs := make(chan utils.EmailJob, 10) // BUFFER
+	stop := make(chan struct{})
+	wg := &sync.WaitGroup{}
+	emailUC := usecase.NewEmailService(logger, config)
+
+	utils.StartEmailWorkers(4, emailJobs, stop, wg, emailUC)
+
 	// init usecase and adaptor
-	uc := usecase.NewUseCase(repo, logger, tx)
+	uc := usecase.NewUseCase(repo, logger, tx, config, emailJobs)
 	adaptor := adaptor.NewAdaptor(uc, logger, config)
 
 	// init middleware
@@ -36,7 +51,11 @@ func Wiring(tx *gorm.DB, repo *repository.Repository, logger *zap.Logger, config
 	wireAuth(r1, adaptor, authMW)
 	wireMenuManagement(r1, adaptor)
 
-	return router
+	return &App{
+		Route: router,
+		Stop:  stop,
+		WG:    wg,
+	}
 }
 
 // All Route Here
@@ -58,9 +77,9 @@ func wireUser(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.
 func wireAuth(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.AuthMiddleware) {
 	auth := router.Group("/auth")
 	auth.POST("/login", adaptor.Login)
-	auth.POST("/forget-password", adaptor.GetOtpResetPassword)
+	auth.POST("/reset-password", adaptor.GetOtpResetPassword)
 	auth.POST("/verify-otp", adaptor.GetSessionResetPassword)
-	auth.POST("/reset-password", adaptor.ResetPassword)
+	auth.POST("/update-password", adaptor.ResetPassword)
 	auth.Use(mw.SessionAuthMiddleware())
 	auth.POST("/logout", adaptor.Logout)
 }

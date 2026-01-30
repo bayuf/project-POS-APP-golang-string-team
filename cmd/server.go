@@ -10,15 +10,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/bayuf/project-POS-APP-golang-string-team/internal/wire"
 	"github.com/bayuf/project-POS-APP-golang-string-team/pkg/utils"
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
-func APIserver(route *gin.Engine, config *utils.Configuration, logger *zap.Logger) {
+func APIserver(app *wire.App, config *utils.Configuration, logger *zap.Logger) {
 	srv := &http.Server{
 		Addr:    ":" + config.Port,
-		Handler: route.Handler(),
+		Handler: app.Route.Handler(),
 	}
 
 	go func() {
@@ -38,6 +38,10 @@ func APIserver(route *gin.Engine, config *utils.Configuration, logger *zap.Logge
 	// kill -9 is syscall.SIGKILL but can't be caught, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
+
+	close(app.Stop)
+	app.WG.Wait()
+
 	log.Println("Shutdown", config.AppName)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

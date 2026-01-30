@@ -13,6 +13,19 @@ type Pagination struct {
 	TotalRecords int64 `json:"total_records"`
 }
 
+// EMAIL
+type Email struct {
+	Type string
+
+	Username string
+	Email    string
+	Subject  string
+	Body     string
+
+	Code     string
+	Password string
+}
+
 // USER
 type UserDetail struct {
 	Name       string    `json:"name"`
