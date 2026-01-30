@@ -201,15 +201,9 @@ func (h *ProductHandler) UpdateProductId(c *gin.Context) {
 		return
 	}
 
-	// request payload
 	var req dto.CreateProduct
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ResponseFailed(c, http.StatusBadRequest, "invalid request body", err.Error())
-		return
-	}
-
-	if validationErrors, err := utils.ValidateErrors(req); err != nil {
-		utils.ResponseFailed(c, http.StatusBadRequest, "validation failed", validationErrors)
 		return
 	}
 
