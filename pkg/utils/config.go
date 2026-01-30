@@ -13,6 +13,7 @@ type Configuration struct {
 	PathLogging string
 	GinMode     string
 	DB          DatabaseCofig
+	Email       EmailConfig
 }
 
 type DatabaseCofig struct {
@@ -27,6 +28,13 @@ type DatabaseCofig struct {
 	MaxOpen   int
 	DBMigrate bool
 	DBSeeder  bool
+}
+
+type EmailConfig struct {
+	From     string
+	Password string
+	SMTPHost string
+	SMTPPort string
 }
 
 func ReadConfiguration() (*Configuration, error) {
@@ -67,6 +75,12 @@ func ReadConfiguration() (*Configuration, error) {
 			MaxOpen:   viper.GetInt("DATABASE_MAX_OPEN_CONN"),
 			DBMigrate: viper.GetBool("DATABASE_MIGRATE"),
 			DBSeeder:  viper.GetBool("DATABASE_MIGRATE_SEEDER"),
+		},
+		Email: EmailConfig{
+			From:     viper.GetString("EMAIL_FROM"),
+			Password: viper.GetString("EMAIL_PASSWORD"),
+			SMTPHost: viper.GetString("EMAIL_SMTP_HOST"),
+			SMTPPort: viper.GetString("EMAIL_SMTP_PORT"),
 		},
 	}, nil
 

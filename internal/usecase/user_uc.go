@@ -14,14 +14,16 @@ import (
 )
 
 type UserService struct {
-	repo   repository.UserRepositoryIface
-	logger *zap.Logger
+	repo     repository.UserRepositoryIface
+	logger   *zap.Logger
+	emailJob chan<- utils.EmailJob
 }
 
-func NewUserService(repo repository.UserRepositoryIface, logger *zap.Logger) *UserService {
+func NewUserService(repo repository.UserRepositoryIface, logger *zap.Logger, emailJob chan<- utils.EmailJob) *UserService {
 	return &UserService{
-		repo:   repo,
-		logger: logger,
+		repo:     repo,
+		logger:   logger,
+		emailJob: emailJob,
 	}
 }
 
@@ -67,6 +69,22 @@ func (uc *UserService) CreateUser(ctx context.Context, newUser dto.CreateUser) e
 		ShiftEnd:         newUser.ShiftEnd,
 	}); err != nil {
 		return err
+	}
+
+	// send password via email
+	payload := &dto.Email{
+		Type:     "password",
+		Email:    newUser.Email,
+		Username: newUser.Name,
+		Password: "12345",
+	}
+
+	select {
+	case uc.emailJob <- utils.EmailJob{Payload: payload}:
+	default:
+		uc.logger.Warn("email job queue full, skipping email",
+			zap.String("email", newUser.Email),
+		)
 	}
 
 	return nil
