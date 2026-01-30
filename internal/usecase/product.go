@@ -29,7 +29,7 @@ func NewProductService(repo repository.ProductsRepository, logger *zap.Logger, t
 func (u *ProductService) CreateProduct(ctx context.Context, req dto.CreateProduct) error {
 	return u.tx.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
-		repo := repository.NewProductsRepository(tx, u.log)
+		repo := repository.NewProductsRepository(tx, u.logger)
 
 		exist, err := repo.IsProductExists(ctx, req.Name)
 		if err != nil {
