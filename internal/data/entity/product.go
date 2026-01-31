@@ -17,5 +17,5 @@ type Product struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 
 	Category  *MenuCategory `gorm:"foreignKey:CategoryID;references:ID"`
-	Inventory *Inventory
+	Inventory *Inventory    `json:"-"`
 }

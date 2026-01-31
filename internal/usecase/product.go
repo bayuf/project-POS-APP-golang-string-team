@@ -75,7 +75,7 @@ func (u UseCase) FindAllProducts(page, limit int, categoryID *uint) ([]entity.Pr
 	return products, pagination, nil
 }
 
-func (u UseCase) FindProductById(ctx context.Context, id int64) (*dto.Product, error) {
+func (u UseCase) FindProductById(ctx context.Context, id int64) (*dto.ProductGlobalResponse, error) {
 	product, err := u.repo.ProductRepo.FindById(ctx, id)
 	if err != nil {
 		return nil, err
@@ -85,15 +85,15 @@ func (u UseCase) FindProductById(ctx context.Context, id int64) (*dto.Product, e
 		return nil, errors.New("product id not found")
 	}
 
-	var category *dto.Category
+	var category *dto.CategoryResponse
 	if product.Category != nil {
-		category = &dto.Category{
+		category = &dto.CategoryResponse{
 			ID:   product.Category.ID,
 			Name: product.Category.Name,
 		}
 	}
 
-	return &dto.Product{
+	return &dto.ProductGlobalResponse{
 		ID:          product.ID,
 		Name:        product.Name,
 		Price:       product.Price,

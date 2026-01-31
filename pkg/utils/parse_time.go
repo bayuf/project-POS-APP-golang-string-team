@@ -23,3 +23,8 @@ func ParseTime(timeStr string) (*time.Time, error) {
 func ParseDate(dateStr string) (time.Time, error) {
 	return time.Parse("2006-01-02", dateStr)
 }
+
+// pointer to time
+func PtrTime(t time.Time) *time.Time {
+	return &t
+}
