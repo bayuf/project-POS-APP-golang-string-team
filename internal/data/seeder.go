@@ -31,6 +31,8 @@ func dataSeeds() []SeederFunc {
 		seedCategories,
 		seedProducts,
 		seedInventories,
+		SeedTables,
+		SeedReservations,
 	}
 }
 
@@ -225,7 +227,6 @@ func seedProducts(db *gorm.DB, logger *zap.Logger) error {
 
 func seedInventories(db *gorm.DB, logger *zap.Logger) error {
 	var products []entity.Product
-
 	if err := db.Find(&products).Error; err != nil {
 		return err
 	}
@@ -237,18 +238,67 @@ func seedInventories(db *gorm.DB, logger *zap.Logger) error {
 	logger.Info("seeding inventories", zap.Int("products", len(products)))
 
 	for _, p := range products {
-		inv := entity.Inventory{
-			ProductID: p.ID,
-			Stock:     15,
-			Unit:      "pcs",
-		}
+		var existing entity.Inventory
+		err := db.Unscoped().Where("product_id = ?", p.ID).First(&existing).Error
 
-		if err := db.
-			Where("product_id = ?", p.ID).
-			FirstOrCreate(&inv).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			inv := entity.Inventory{
+				ProductID: p.ID,
+				Stock:     15,
+				Unit:      "pcs",
+			}
+			if err := db.Create(&inv).Error; err != nil {
+				return err
+			}
+		} else if err == nil && existing.DeletedAt.Valid {
+			db.Unscoped().Model(&existing).Update("deleted_at", nil)
+			logger.Info("inventory restored", zap.Int64("product_id", p.ID))
+		}
+	}
+	logger.Info("Inventories ensured")
+	return nil
+}
+
+func SeedTables(db *gorm.DB, logger *zap.Logger) error {
+	tables := []entity.RestaurantTable{
+		{TableNumber: 1, Capacity: 2, IsActive: true},
+		{TableNumber: 2, Capacity: 4, IsActive: true},
+		{TableNumber: 3, Capacity: 4, IsActive: true},
+		{TableNumber: 4, Capacity: 6, IsActive: true},
+		{TableNumber: 5, Capacity: 8, IsActive: true},
+	}
+
+	for _, t := range tables {
+		if err := db.Where("table_number = ?", t.TableNumber).FirstOrCreate(&t).Error; err != nil {
 			return err
 		}
 	}
+	logger.Info("restaurant tables ensured")
+	return nil
+}
 
+func SeedReservations(db *gorm.DB, logger *zap.Logger) error {
+	var table entity.RestaurantTable
+	if err := db.Where("table_number = ?", 3).First(&table).Error; err != nil {
+		logger.Warn("Table #3 not found, skipping reservation seed")
+		return nil
+	}
+
+	layout := "2006-01-02 15:04"
+	resTime1, _ := time.Parse(layout, "2026-02-10 19:00")
+	resTime2, _ := time.Parse(layout, "2026-02-11 13:00")
+
+	reservations := []entity.Reservation{
+		{CustomerName: "John Doe", TableID: table.ID, ReservationTime: resTime1},
+		{CustomerName: "Jane Smith", TableID: table.ID, ReservationTime: resTime2},
+	}
+
+	for _, r := range reservations {
+		if err := db.Where("customer_name = ? AND reservation_time = ?", r.CustomerName, r.ReservationTime).
+			FirstOrCreate(&r).Error; err != nil {
+			return err
+		}
+	}
+	logger.Info("reservations ensured")
 	return nil
 }
