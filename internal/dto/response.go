@@ -87,17 +87,13 @@ type CodeOTP struct {
 }
 
 // Category
-type Category struct {
+type CategoryResponse struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
 }
 
-type Categorys struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-}
-
-type Product struct {
+// global prod response
+type ProductGlobalResponse struct {
 	ID          int64   `json:"id"`
 	Name        string  `json:"name"`
 	Price       float64 `json:"price"`
@@ -107,5 +103,31 @@ type Product struct {
 	UpdatedAt *time.Time `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at"`
 
-	Category *Category `json:"category,omitempty"`
+	Category  *CategoryResponse        `json:"category,omitempty"`
+	Inventory *InventoryGlobalResponse `json:"inventory,omitempty"`
+}
+
+// INVENTORY
+type InventoryGlobalResponse struct {
+	ID    int64  `json:"id"`
+	Stock int    `json:"stock"`
+	Unit  string `json:"unit"`
+}
+
+type InventoryResponse struct {
+	ID        int64     `json:"id"`
+	ProductID int64     `json:"product_id"`
+	Stock     int       `json:"stock"`
+	Unit      string    `json:"unit"`
+	CreatedAt time.Time `json:"created_at"`
+
+	Product ProductResponseInInventory `json:"product"`
+}
+
+type ProductResponseInInventory struct {
+	ID          int64   `json:"id"`
+	CategoryID  int64   `json:"category_id"`
+	Name        string  `json:"name"`
+	Price       float64 `json:"price"`
+	IsAvailable bool    `json:"is_available"`
 }

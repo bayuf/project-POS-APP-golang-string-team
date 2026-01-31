@@ -15,5 +15,7 @@ type Inventory struct {
 	UpdatedAt *time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 
-	Product *Product `gorm:"foreignKey:ProductID;constraint:OnDelete:CASCADE"`
+	// Product *Product `gorm:"foreignKey:ProductID;constraint:OnDelete:CASCADE"`
+	// Product Product `json:"product" gorm:"foreignKey:ProductID"`
+	Product *Product `gorm:"foreignKey:ProductID;references:ID"`
 }

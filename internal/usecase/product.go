@@ -15,19 +15,21 @@ import (
 type ProductService struct {
 	repo   repository.ProductsRepository
 	logger *zap.Logger
+	tx     *gorm.DB
 }
 
 func NewProductService(repo repository.ProductsRepository, logger *zap.Logger, tx *gorm.DB) *ProductService {
 	return &ProductService{
 		repo:   repo,
 		logger: logger,
+		tx:     tx,
 	}
 }
 
-func (u *UseCase) CreateProduct(ctx context.Context, req dto.CreateProduct) error {
+func (u *ProductService) CreateProduct(ctx context.Context, req dto.CreateProduct) error {
 	return u.tx.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
-		repo := repository.NewProductsRepository(tx, u.log)
+		repo := repository.NewProductsRepository(tx, u.logger)
 
 		exist, err := repo.IsProductExists(ctx, req.Name)
 		if err != nil {
@@ -73,7 +75,7 @@ func (u UseCase) FindAllProducts(page, limit int, categoryID *uint) ([]entity.Pr
 	return products, pagination, nil
 }
 
-func (u UseCase) FindProductById(ctx context.Context, id int64) (*dto.Product, error) {
+func (u UseCase) FindProductById(ctx context.Context, id int64) (*dto.ProductGlobalResponse, error) {
 	product, err := u.repo.ProductRepo.FindById(ctx, id)
 	if err != nil {
 		return nil, err
@@ -83,15 +85,15 @@ func (u UseCase) FindProductById(ctx context.Context, id int64) (*dto.Product, e
 		return nil, errors.New("product id not found")
 	}
 
-	var category *dto.Category
+	var category *dto.CategoryResponse
 	if product.Category != nil {
-		category = &dto.Category{
+		category = &dto.CategoryResponse{
 			ID:   product.Category.ID,
 			Name: product.Category.Name,
 		}
 	}
 
-	return &dto.Product{
+	return &dto.ProductGlobalResponse{
 		ID:          product.ID,
 		Name:        product.Name,
 		Price:       product.Price,

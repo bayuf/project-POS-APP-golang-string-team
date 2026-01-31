@@ -26,6 +26,7 @@ func dataSeeds() []SeederFunc {
 		// entity.SeedUsers(),
 		seedCategories,
 		seedProducts,
+		seedInventories,
 	}
 }
 
@@ -39,7 +40,7 @@ func seedCategories(db *gorm.DB, logger *zap.Logger) error {
 	}
 
 	for _, cat := range categories {
-		if err := db.FirstOrCreate(&cat, "name = ?", cat.Name).Error; err != nil {
+		if err := db.FirstOrCreate(&cat, "name = ?", cat.Name).FirstOrCreate(&cat).Error; err != nil {
 			logger.Error("failed to seed menu category",
 				zap.String("name", cat.Name),
 				zap.Error(err),
@@ -49,6 +50,12 @@ func seedCategories(db *gorm.DB, logger *zap.Logger) error {
 		logger.Info("menu category ensured", zap.String("name", cat.Name))
 	}
 
+	var count int64
+	db.Model(&entity.MenuCategory{}).Count(&count)
+	if count == 0 {
+		return fmt.Errorf("category seeding failed, no data inserted")
+	}
+
 	return nil
 }
 
@@ -56,6 +63,10 @@ func seedProducts(db *gorm.DB, logger *zap.Logger) error {
 	var categories []entity.MenuCategory
 	if err := db.Find(&categories).Error; err != nil {
 		return err
+	}
+
+	if len(categories) == 0 {
+		return fmt.Errorf("no categories found, seedCategories must run first")
 	}
 
 	categoryMap := make(map[string]int64)
@@ -83,21 +94,54 @@ func seedProducts(db *gorm.DB, logger *zap.Logger) error {
 	}
 
 	for _, prod := range products {
-		var existing entity.Product
-		err := db.
-			Where("name = ? AND category_id = ?", prod.Name, prod.CategoryID).
-			First(&existing).Error
+		if prod.CategoryID == 0 {
+			return fmt.Errorf("invalid category_id for product %s", prod.Name)
+		}
 
-		if err == gorm.ErrRecordNotFound {
-			if err := db.Create(&prod).Error; err != nil {
-				logger.Error("failed to seed product", zap.String("name", prod.Name), zap.Error(err))
-				return err
-			}
-			logger.Info("product seeded", zap.String("name", prod.Name))
-		} else if err != nil {
+		if err := db.
+			Where("name = ? AND category_id = ?", prod.Name, prod.CategoryID).
+			FirstOrCreate(&prod).Error; err != nil {
+
+			logger.Error("failed to seed product",
+				zap.String("name", prod.Name),
+				zap.Error(err),
+			)
 			return err
-		} else {
-			logger.Info("product already exists", zap.String("name", prod.Name))
+		}
+
+		logger.Info("product ensured",
+			zap.Int64("id", prod.ID),
+			zap.String("name", prod.Name),
+		)
+	}
+
+	return nil
+}
+
+func seedInventories(db *gorm.DB, logger *zap.Logger) error {
+	var products []entity.Product
+
+	if err := db.Find(&products).Error; err != nil {
+		return err
+	}
+
+	if len(products) == 0 {
+		return fmt.Errorf("no products found, inventory seed aborted")
+	}
+
+	logger.Info("seeding inventories", zap.Int("products", len(products)))
+
+	for _, p := range products {
+		inv := entity.Inventory{
+			ProductID: p.ID,
+			Stock:     15,
+			Unit:      "pcs",
+		}
+
+		if err := db.
+			Where("product_id = ?", p.ID).
+			FirstOrCreate(&inv).Error; err != nil {
+			return err
 		}
 	}
 
