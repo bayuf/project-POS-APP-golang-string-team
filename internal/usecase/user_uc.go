@@ -28,7 +28,12 @@ func NewUserService(repo repository.UserRepositoryIface, logger *zap.Logger, ema
 }
 
 func (uc *UserService) CreateUser(ctx context.Context, newUser dto.CreateUser) error {
-	hashedPassword, err := utils.HashString("12345")
+	defaultPass, err := utils.GenerateRandomString(6)
+	if err != nil {
+		return err
+	}
+
+	hashedPassword, err := utils.HashString(defaultPass)
 	if err != nil {
 		return err
 	}
@@ -76,7 +81,7 @@ func (uc *UserService) CreateUser(ctx context.Context, newUser dto.CreateUser) e
 		Type:     "password",
 		Email:    newUser.Email,
 		Username: newUser.Name,
-		Password: "12345",
+		Password: defaultPass,
 	}
 
 	select {
