@@ -80,3 +80,20 @@ type CreateProduct struct {
 	Price       float64 `json:"price" binding:"required,gte=0"`
 	IsAvailable *bool   `json:"is_available,omitempty"`
 }
+
+// INVENTORY
+type CreateInventory struct {
+	ProductID int64  `json:"product_id" binding:"required"`
+	Stock     int    `json:"stock" binding:"required,min=0"`
+	Unit      string `json:"unit" binding:"omitempty,max=20"`
+}
+
+type UpdateInventory struct {
+	Stock int    `json:"stock" binding:"required,min=0"`
+	Unit  string `json:"unit" binding:"omitempty,max=20"`
+}
+
+type InventoryFilterRequest struct {
+	Page  int `form:"page" binding:"omitempty,min=1"`
+	Limit int `form:"limit" binding:"omitempty,min=1,max=100"`
+}

@@ -35,6 +35,7 @@ func Wiring(tx *gorm.DB, repo *repository.Repository, logger *zap.Logger, config
 	wireUser(r1, adaptor, authMW)
 	wireAuth(r1, adaptor, authMW)
 	wireMenuManagement(r1, adaptor)
+	wireInventory(r1, adaptor)
 
 	return router
 }
@@ -65,6 +66,7 @@ func wireAuth(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.
 	auth.POST("/logout", adaptor.Logout)
 }
 
+// belum ada middleware
 func wireMenuManagement(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 	menu := router.Group("/menu")
 	{
@@ -87,4 +89,14 @@ func wireMenuManagement(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 			products.GET("/category/:name", adaptor.ProductsHandler.GetProductsByCategoryName)
 		}
 	}
+}
+
+// belum ada middleware
+func wireInventory(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
+	inven := router.Group("/inventories")
+
+	inven.GET("", adaptor.InventoryHandler.GetAllInventories)
+	inven.GET("/:id", adaptor.InventoryHandler.FindInventoryDetail)
+	inven.POST("", adaptor.InventoryHandler.CreateInventory)
+	inven.PUT("/:id", adaptor.InventoryHandler.UpdateInventoryId)
 }
