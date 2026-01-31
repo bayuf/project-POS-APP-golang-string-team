@@ -90,3 +90,44 @@ func (u *InventoryService) UpdateInventoryId(ctx context.Context, id int64, req 
 
 	return u.repo.UpdateInventoryId(ctx, id, updateInven)
 }
+
+func (u *InventoryService) DeleteInventoryId(ctx context.Context, id int64) error {
+	exist, err := u.repo.FindByIdInventory(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if exist == nil {
+		return errors.New("inventory not found")
+	}
+
+	return u.repo.DeletInventoryId(ctx, id)
+}
+
+func (u *InventoryService) SearchInventory(ctx context.Context, q dto.SearchInventoryQuery) ([]entity.Inventory, dto.Pagination, error) {
+
+	if q.Page < 1 {
+		q.Page = 1
+	}
+	if q.Limit < 1 {
+		q.Limit = 10
+	}
+
+	offset := (q.Page - 1) * q.Limit
+
+	data, total, err := u.repo.SearchInventories(ctx, q, offset)
+	if err != nil {
+		return nil, dto.Pagination{}, err
+	}
+
+	totalPage := int(math.Ceil(float64(total) / float64(q.Limit)))
+
+	pagination := dto.Pagination{
+		CurrentPage:  q.Page,
+		Limit:        q.Limit,
+		TotalPages:   totalPage,
+		TotalRecords: total,
+	}
+
+	return data, pagination, nil
+}

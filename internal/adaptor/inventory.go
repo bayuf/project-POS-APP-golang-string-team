@@ -182,3 +182,95 @@ func (h *InventoryHandler) UpdateInventoryId(c *gin.Context) {
 		updateInventory,
 	)
 }
+
+func (h *InventoryHandler) DeleteInventoryById(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	idStr := c.Param("id")
+	if idStr == "" {
+		utils.ResponseFailed(
+			c,
+			http.StatusBadRequest,
+			"id category is required",
+			nil,
+		)
+		return
+	}
+
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		utils.ResponseFailed(
+			c,
+			http.StatusBadRequest,
+			"id category must be a number",
+			err.Error(),
+		)
+		return
+	}
+
+	inven, err := h.usecase.GetDetailInventory(ctx, id)
+	if err != nil || inven == nil {
+		utils.ResponseFailed(
+			c,
+			http.StatusNotFound,
+			"failed to delete inventory by id",
+			"inventory not found",
+		)
+		return
+	}
+
+	if err := h.usecase.DeleteInventoryId(ctx, id); err != nil {
+		utils.ResponseFailed(
+			c,
+			http.StatusInternalServerError,
+			"failed to delete inventory by id",
+			err.Error(),
+		)
+		return
+	}
+
+	utils.ResponseSuccess(
+		c,
+		http.StatusOK,
+		"success delete inventory by id",
+		inven,
+	)
+}
+
+func (h *InventoryHandler) SearchInventories(c *gin.Context) {
+	var query dto.SearchInventoryQuery
+
+	if err := c.ShouldBindQuery(&query); err != nil {
+		utils.ResponseFailed(
+			c,
+			http.StatusBadRequest,
+			"invalid query params",
+			err.Error(),
+		)
+		return
+	}
+
+	data, pagination, err :=
+		h.usecase.InventoryService.SearchInventory(
+			c.Request.Context(),
+			query,
+		)
+
+	if err != nil {
+		utils.ResponseFailed(
+			c,
+			http.StatusInternalServerError,
+			"failed to search inventories",
+			err.Error(),
+		)
+		return
+	}
+
+	utils.ResponsePagination(
+		c,
+		http.StatusOK,
+		"success search inventories",
+		data,
+		pagination,
+	)
+}

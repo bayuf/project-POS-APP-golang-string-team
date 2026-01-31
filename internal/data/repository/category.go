@@ -42,11 +42,19 @@ func (r *categoryRepo) FindAll(ctx context.Context, page, limit int) ([]entity.M
 
 	offset := (page - 1) * limit
 
-	if err := r.DB.WithContext(ctx).Model(&entity.MenuCategory{}).Count(&total).Error; err != nil {
+	// total
+	if err := r.DB.WithContext(ctx).
+		Model(&entity.MenuCategory{}).
+		Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	if err := r.DB.WithContext(ctx).Limit(limit).Offset(offset).Find(&categories).Error; err != nil {
+	// data + preload products
+	if err := r.DB.WithContext(ctx).
+		Preload("Products").
+		Limit(limit).
+		Offset(offset).
+		Find(&categories).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -54,14 +62,19 @@ func (r *categoryRepo) FindAll(ctx context.Context, page, limit int) ([]entity.M
 }
 
 func (r *categoryRepo) FindById(ctx context.Context, id int64) (*entity.MenuCategory, error) {
-	var ctg entity.MenuCategory
-	err := r.DB.WithContext(ctx).First(&ctg, id).Error
+	var category entity.MenuCategory
+
+	err := r.DB.Debug().
+		Model(&entity.MenuCategory{}).
+		Preload("Products").
+		Where("id = ?", id).
+		First(&category).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 
-	return &ctg, nil
+	return &category, nil
 }
 
 func (r *categoryRepo) UpdateCategoryId(ctx context.Context, id int64, ctg *entity.MenuCategory) (*entity.MenuCategory, error) {

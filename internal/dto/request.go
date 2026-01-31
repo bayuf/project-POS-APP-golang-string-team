@@ -97,3 +97,23 @@ type InventoryFilterRequest struct {
 	Page  int `form:"page" binding:"omitempty,min=1"`
 	Limit int `form:"limit" binding:"omitempty,min=1,max=100"`
 }
+
+// type InventoryProductFilter struct {
+// 	// ProductName string
+// 	// Category    string
+// 	// IsAvailable *bool
+// 	ProductName *string
+// 	CategoryID  *int64
+// 	MinStock    *int
+// 	MaxStock    *int
+// 	// IsAvailable *bool
+// }
+
+type SearchInventoryQuery struct {
+	ProductName string `form:"product_name"`
+	CategoryID  *int64 `form:"category_id"`
+	MinStock    *int   `form:"min_stock"`
+	MaxStock    *int   `form:"max_stock"`
+	Page        int    `form:"page"`
+	Limit       int    `form:"limit"`
+}

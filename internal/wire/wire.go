@@ -114,8 +114,13 @@ func wireMenuManagement(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 func wireInventory(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 	inven := router.Group("/inventories")
 
-	inven.GET("", adaptor.InventoryHandler.GetAllInventories)
-	inven.GET("/:id", adaptor.InventoryHandler.FindInventoryDetail)
 	inven.POST("", adaptor.InventoryHandler.CreateInventory)
+	inven.GET("", adaptor.InventoryHandler.GetAllInventories)
+
+	// /inventories/search?product_name=garlic&category_id=1&min_stock=10&max_stock=10
+	inven.GET("/search", adaptor.InventoryHandler.SearchInventories)
+
+	inven.GET("/:id", adaptor.InventoryHandler.FindInventoryDetail)
 	inven.PUT("/:id", adaptor.InventoryHandler.UpdateInventoryId)
+	inven.DELETE("/:id", adaptor.InventoryHandler.DeleteInventoryById)
 }
