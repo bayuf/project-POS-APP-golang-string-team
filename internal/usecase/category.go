@@ -6,8 +6,22 @@ import (
 	"math"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/entity"
+	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/repository"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/dto"
+	"go.uber.org/zap"
 )
+
+type CategoryService struct {
+	repo   repository.CategoryRepository
+	logger *zap.Logger
+}
+
+func NewCategoryService(repo repository.CategoryRepository, logg *zap.Logger) *CategoryService {
+	return &CategoryService{
+		repo:   repo,
+		logger: logg,
+	}
+}
 
 func (u UseCase) CreateCategory(ctx context.Context, req dto.CreateCategory) (*entity.MenuCategory, error) {
 	//  unique name

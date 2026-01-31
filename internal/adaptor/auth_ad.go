@@ -78,14 +78,14 @@ func (ad *AuthHandler) GetOtpResetPassword(c *gin.Context) {
 		return
 	}
 
-	code, err := ad.uc.ForgetPassword(ctx, data.Email)
+	err := ad.uc.ResetPassword(ctx, data.Email)
 	if err != nil {
 		ad.logger.Error("failed to get otp reset password", zap.Error(err))
 		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
 		return
 	}
 
-	utils.ResponseSuccess(c, http.StatusOK, "success", code)
+	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
 }
 
 func (ad *AuthHandler) GetSessionResetPassword(c *gin.Context) {

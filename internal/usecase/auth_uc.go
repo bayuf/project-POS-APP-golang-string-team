@@ -15,16 +15,18 @@ import (
 )
 
 type AuthService struct {
-	repo   repository.AuthRepositoryIface
-	logger *zap.Logger
-	tx     *gorm.DB
+	repo     repository.AuthRepositoryIface
+	logger   *zap.Logger
+	tx       *gorm.DB
+	emailJob chan<- utils.EmailJob
 }
 
-func NewAuthService(repo repository.AuthRepositoryIface, logger *zap.Logger, tx *gorm.DB) *AuthService {
+func NewAuthService(repo repository.AuthRepositoryIface, logger *zap.Logger, tx *gorm.DB, emailJob chan<- utils.EmailJob) *AuthService {
 	return &AuthService{
-		repo:   repo,
-		logger: logger,
-		tx:     tx,
+		repo:     repo,
+		logger:   logger,
+		tx:       tx,
+		emailJob: emailJob,
 	}
 }
 
@@ -74,27 +76,27 @@ func (uc *AuthService) Logout(ctx context.Context, sessionID uuid.UUID) error {
 	return uc.repo.RevokeSessionBySessionId(ctx, sessionID)
 }
 
-func (uc *AuthService) ForgetPassword(ctx context.Context, email string) (*dto.CodeOTP, error) {
+func (uc *AuthService) ResetPassword(ctx context.Context, email string) error {
 	// get user
 	user, err := uc.repo.GetUserByEmail(ctx, email)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// cek user valid
 	if user == nil {
-		return nil, errors.New("user not found")
+		return errors.New("user not found")
 	}
 
 	// generate code otp
 	code, err := utils.GenerateOTP()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	hashedCode, err := utils.HashString(code)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// add OTP to db
@@ -105,20 +107,26 @@ func (uc *AuthService) ForgetPassword(ctx context.Context, email string) (*dto.C
 		OTPHash:   hashedCode,
 		ExpiredAt: time.Now().Add(5 * time.Minute),
 	}); err != nil {
-		return nil, err
+		return err
 	}
 
-	// get OTP Data
-	otpData, err := uc.repo.GetOTPByID(ctx, idOTP)
-	if err != nil {
-		return nil, err
+	// send otp via email
+	payload := &dto.Email{
+		Type:     "otp",
+		Email:    user.Email,
+		Username: user.Name,
+		Code:     code,
 	}
 
-	return &dto.CodeOTP{
-		// OTPToken:  nil,
-		Code:      &code,
-		ExpiredAt: otpData.ExpiredAt,
-	}, nil
+	select {
+	case uc.emailJob <- utils.EmailJob{Payload: payload}:
+	default:
+		uc.logger.Warn("email job queue full, skipping email",
+			zap.String("email", user.Email),
+		)
+	}
+
+	return nil
 }
 
 func (uc *AuthService) VerifyOTP(ctx context.Context, otp dto.VerifyOTP) (*dto.CodeOTP, error) {

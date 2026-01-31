@@ -75,39 +75,37 @@ func (r *categoryRepo) UpdateCategoryId(ctx context.Context, id int64, ctg *enti
 }
 
 func (r *categoryRepo) DeleteCategoryId(ctx context.Context, id int64) error {
-	now := time.Now()
+	return r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
-	return r.DB.WithContext(ctx).
-		Model(&entity.MenuCategory{}).
-		Where("id = ?", id).
-		Update("deleted_at", &now).Error
+		catRepo := NewCategoryRepository(tx, r.Log)
+		prodRepo := NewProductsRepository(tx, r.Log)
+
+		ctg, err := catRepo.FindById(ctx, id)
+		if err != nil {
+			return err
+		}
+		if ctg == nil {
+			return errors.New("category not found")
+		}
+
+		// produk yang active
+		hasProd, err := prodRepo.HasActiveProducts(ctx, id)
+		if err != nil {
+			return err
+		}
+		if hasProd {
+			return errors.New("category still has active products")
+		}
+
+		now := time.Now()
+
+		return tx.WithContext(ctx).
+			Model(&entity.MenuCategory{}).
+			Where("id = ?", id).
+			Update("deleted_at", &now).
+			Error
+	})
 }
-
-// func (r *categoryRepo) DeleteCategoryWithProducts(ctx context.Context, id int64) error {
-// 	now := time.Now()
-
-// 	return r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-
-// 		// soft delete products
-// 		if err := tx.Model(&entity.Product{}).
-// 			Where("category_id = ?", id).
-// 			Updates(map[string]interface{}{
-// 				"is_available": false,
-// 				"deleted_at":   &now,
-// 			}).Error; err != nil {
-// 			return err
-// 		}
-
-// 		// soft delete category
-// 		if err := tx.Model(&entity.MenuCategory{}).
-// 			Where("id = ?", id).
-// 			Update("deleted_at", &now).Error; err != nil {
-// 			return err
-// 		}
-
-// 		return nil
-// 	})
-// }
 
 func (r *categoryRepo) IsUniqueName(ctx context.Context, name string) (*entity.MenuCategory, error) {
 	var category entity.MenuCategory
