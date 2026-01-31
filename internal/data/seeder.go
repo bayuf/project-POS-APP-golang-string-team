@@ -2,8 +2,11 @@ package data
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/entity"
+	"github.com/bayuf/project-POS-APP-golang-string-team/pkg/utils"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -14,6 +17,7 @@ func SeedAll(db *gorm.DB, logger *zap.Logger) error {
 	return db.Transaction(func(tx *gorm.DB) error {
 		for _, seed := range dataSeeds() {
 			if err := seed(tx, logger); err != nil {
+				logger.Error("seeding failed", zap.Error(err))
 				return fmt.Errorf("database seeding failed: %w", err)
 			}
 		}
@@ -23,11 +27,112 @@ func SeedAll(db *gorm.DB, logger *zap.Logger) error {
 
 func dataSeeds() []SeederFunc {
 	return []SeederFunc{
-		// entity.SeedUsers(),
+		seedUsers,
 		seedCategories,
 		seedProducts,
 		seedInventories,
 	}
+}
+
+func seedUsers(db *gorm.DB, logger *zap.Logger) error {
+	now := time.Now()
+	password, err := utils.HashString("admin12345")
+	if err != nil {
+		panic(err)
+	}
+	users := []entity.User{
+		{
+			ID:           uuid.New(),
+			Name:         "Super Admin",
+			Email:        "super@admin.com",
+			PasswordHash: password,
+			Phone:        "089111111111",
+			Role:         "superadmin",
+			Permissions: map[string]bool{
+				entity.PermissionDashboard: true,
+				entity.PermissionReports:   true,
+				entity.PermissionInventory: true,
+				entity.PermissionOrders:    true,
+				entity.PermissionCustomers: true,
+				entity.PermissionSettings:  true,
+			},
+			ShiftStart: "09:00:00",
+			ShiftEnd:   "16:00:00",
+			Address:    "Kab. Gresik",
+			BirthDate:  time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
+			Salary:     10000000,
+			IsActive:   true,
+			CreatedAt:  now,
+			UpdatedAt:  now,
+		},
+		{
+			ID:           uuid.New(),
+			Name:         "Bayu Firmansyah",
+			Email:        "bayu19fr@gmail.com",
+			PasswordHash: password,
+			Phone:        "089111111111",
+			Permissions: map[string]bool{
+				entity.PermissionDashboard: true,
+				entity.PermissionReports:   true,
+				entity.PermissionInventory: true,
+				entity.PermissionOrders:    true,
+				entity.PermissionCustomers: true,
+				entity.PermissionSettings:  false,
+			},
+			ShiftStart: "09:00:00",
+			ShiftEnd:   "16:00:00",
+			Role:       "admin",
+			Address:    "Kab. Gresik",
+			BirthDate:  time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
+			Salary:     10000000,
+			IsActive:   true,
+			CreatedAt:  now,
+			UpdatedAt:  now,
+		},
+		{
+			ID:           uuid.New(),
+			Name:         "Alif Dwi Rahman",
+			Email:        "alifdwirahman.alf@gmail.com",
+			PasswordHash: password,
+			Phone:        "089111111111",
+			Role:         "admin",
+			Permissions: map[string]bool{
+				entity.PermissionDashboard: true,
+				entity.PermissionReports:   true,
+				entity.PermissionInventory: true,
+				entity.PermissionOrders:    true,
+				entity.PermissionCustomers: true,
+				entity.PermissionSettings:  false,
+			},
+			ShiftStart: "09:00:00",
+			ShiftEnd:   "16:00:00",
+			Address:    "Kota Jakarta",
+			BirthDate:  time.Date(2000, 5, 19, 0, 0, 0, 0, time.UTC),
+			Salary:     10000000,
+			IsActive:   true,
+			CreatedAt:  now,
+			UpdatedAt:  now,
+		},
+	}
+
+	for _, user := range users {
+		if err := db.FirstOrCreate(&user, "name = ?", user.Name).FirstOrCreate(&user).Error; err != nil {
+			logger.Error("failed to seed user",
+				zap.String("name", user.Name),
+				zap.Error(err),
+			)
+			return err
+		}
+		logger.Info("user ensured", zap.String("name", user.Name))
+	}
+
+	var count int64
+	db.Model(&entity.User{}).Count(&count)
+	if count == 0 {
+		return fmt.Errorf("category seeding failed, no data inserted")
+	}
+
+	return nil
 }
 
 func seedCategories(db *gorm.DB, logger *zap.Logger) error {
