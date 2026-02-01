@@ -165,3 +165,74 @@ func (s *OrderService) PayOrder(ctx context.Context, paymentMethodID int64, orde
 
 	return &orderDetailRes, nil
 }
+
+func (s *OrderService) EditOrder(ctx context.Context, newOrderData dto.Order, orderID uuid.UUID) error {
+
+	var IDs []int64
+	for _, item := range newOrderData.Orders {
+		IDs = append(IDs, item.ID)
+	}
+
+	// get item info
+	items, err := s.repo.GetProductsInfoByID(ctx, IDs)
+	if err != nil {
+		return err
+	}
+
+	// cek order
+	orderData, err := s.repo.GetOrderDetailByID(ctx, orderID)
+	if err != nil {
+		return err
+	}
+
+	if orderData.ProgressStatus != "in the kitchen" {
+		return errors.New("cant edit. order is already processed")
+	}
+
+	if err := s.tx.Transaction(func(tx *gorm.DB) error {
+		// calculte price
+		var totalPrice decimal.Decimal
+		var totalPricePerItem []decimal.Decimal
+		for i, item := range *items {
+			// per item
+			totalPricePerItem = append(totalPricePerItem, item.Price.Mul(decimal.NewFromInt(int64(newOrderData.Orders[i].Quantity))))
+
+			// all item
+			totalPrice = totalPrice.Add(item.Price.Mul(decimal.NewFromInt(int64(newOrderData.Orders[i].Quantity))))
+		}
+
+		// count total price
+		taxAmount := totalPrice.Mul(decimal.NewFromFloat(0.10))
+		totalPrice = totalPrice.Add(taxAmount)
+
+		// update order
+		if err := s.repo.UpdateOrder(tx, ctx, entity.Order{
+			ID:           orderData.ID,
+			CustomerName: newOrderData.CustomerName,
+			Tax:          taxAmount,
+			TotalPrice:   totalPrice,
+		}); err != nil {
+			return err
+		}
+
+		// update item order
+		itemsAdd := make([]entity.OrderItem, len(newOrderData.Orders))
+		for i, item := range newOrderData.Orders {
+			itemsAdd[i] = entity.OrderItem{
+				OrderID:   orderID,
+				ProductID: item.ID,
+				Quantity:  item.Quantity,
+				Price:     totalPricePerItem[i],
+			}
+		}
+		if err := s.repo.UpdateOrderItems(tx, ctx, itemsAdd); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -75,3 +75,30 @@ func (h *OrderHandler) PayOrder(c *gin.Context) {
 	utils.ResponseSuccess(c, http.StatusOK, "success", orderDetail)
 
 }
+
+func (h *OrderHandler) EditOrder(c *gin.Context) {
+	ctx := c.Request.Context()
+	orderIDStr := c.Param("id")
+	orderID, err := uuid.Parse(orderIDStr)
+	if err != nil {
+		h.logger.Error("failed to parse order id", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	order := dto.Order{}
+	if err := c.ShouldBindJSON(&order); err != nil {
+		h.logger.Error("failed to bind json", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	if err := h.uc.EditOrder(ctx, order, orderID); err != nil {
+		h.logger.Error("failed to edit order", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
+
+}

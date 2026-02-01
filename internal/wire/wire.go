@@ -131,5 +131,6 @@ func wireOrder(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 	order := router.Group("/orders")
 
 	order.POST("", adaptor.Order)
+	order.PUT("/:id", adaptor.OrderHandler.EditOrder)
 	order.PUT("pay/:id", adaptor.OrderHandler.PayOrder)
 }

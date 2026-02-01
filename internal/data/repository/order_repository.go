@@ -16,6 +16,7 @@ type OrderRepositoryIface interface {
 	AddOrderItems(tx *gorm.DB, ctx context.Context, itemOrders []entity.OrderItem) error
 	GetPaymentMethodsById(ctx context.Context, id int64) (*entity.PaymentMethod, error)
 	UpdateOrder(tx *gorm.DB, ctx context.Context, order entity.Order) error
+	UpdateOrderItems(tx *gorm.DB, ctx context.Context, itemOrders []entity.OrderItem) error
 }
 
 type OrderRepository struct {
@@ -92,12 +93,34 @@ func (r *OrderRepository) AddOrderItems(tx *gorm.DB, ctx context.Context, itemOr
 }
 
 func (r *OrderRepository) UpdateOrder(tx *gorm.DB, ctx context.Context, order entity.Order) error {
-	if err := tx.WithContext(ctx).
+	err := tx.WithContext(ctx).
+		Model(&entity.Order{}).
 		Where("id = ?", order.ID).
-		Updates(&order).
-		Error; err != nil {
+		Where("progress_status = ?", "in the kitchen").
+		Select(
+			"customer_name",
+			"tax",
+			"total_price",
+		).
+		Updates(order).Error
+
+	if err != nil {
 		r.logger.Error("failed to update order", zap.Error(err))
 		return err
+	}
+
+	return nil
+}
+
+func (r *OrderRepository) UpdateOrderItems(tx *gorm.DB, ctx context.Context, itemOrders []entity.OrderItem) error {
+	for _, item := range itemOrders {
+		if err := tx.WithContext(ctx).Model(&entity.OrderItem{}).
+			Where("order_id = ?", item.OrderID).
+			Where("product_id = ?", item.ProductID).
+			Updates(item).Error; err != nil {
+			r.logger.Error("failed to update order item", zap.Error(err))
+			return err
+		}
 	}
 
 	return nil

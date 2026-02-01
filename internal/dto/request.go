@@ -126,6 +126,6 @@ type OrderItem struct {
 
 type Order struct {
 	CustomerName string      `json:"customer_name" binding:"required"`
-	TableID      int64       `json:"table_id" binding:"required,gt=0"`
+	TableID      int64       `json:"table_id" binding:"omitempty"`
 	Orders       []OrderItem `json:"orders" binding:"required"`
 }
