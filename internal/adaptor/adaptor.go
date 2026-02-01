@@ -14,10 +14,12 @@ type Adaptor struct {
 	*ReservationHandler
 	*UserHandler
 	*AuthHandler
+	*OrderHandler
 }
 
 func NewAdaptor(uc *usecase.UseCase, logger *zap.Logger, config *utils.Configuration) *Adaptor {
 	return &Adaptor{
+		OrderHandler:     NewOrderHandler(uc.OrderService, logger, config),
 		CategoryHandler:     NewCategoryHandler(uc),
 		ProductsHandler:     NewProductHandler(uc),
 		InventoryHandler:    NewInventoryHandler(uc),

@@ -15,6 +15,7 @@ type UseCase struct {
 	*AuthService
 	*ProductService
 	*InventoryService
+	*OrderService
 	*ReservationService
 	*NotificationService
 }
@@ -24,6 +25,7 @@ func NewUseCase(repo *repository.Repository, logger *zap.Logger, tx *gorm.DB, co
 		log:  logger,
 		repo: *repo,
 
+		OrderService:     NewOrderService(repo.OrderRepository, logger, tx),
 		UserService:         NewUserService(repo.UserRepository, logger, emailJob),
 		AuthService:         NewAuthService(repo.AuthRepository, logger, tx, emailJob),
 		ProductService:      NewProductService(repo.ProductRepo, logger, tx),

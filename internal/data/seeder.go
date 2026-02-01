@@ -7,6 +7,7 @@ import (
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/entity"
 	"github.com/bayuf/project-POS-APP-golang-string-team/pkg/utils"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -31,6 +32,7 @@ func dataSeeds() []SeederFunc {
 		seedCategories,
 		seedProducts,
 		seedInventories,
+		seedPaymentMethods,
 		SeedTables,
 		SeedReservations,
 		seedNotifications,
@@ -183,22 +185,22 @@ func seedProducts(db *gorm.DB, logger *zap.Logger) error {
 	}
 
 	products := []entity.Product{
-		{CategoryID: categoryMap["Appetizer"], Name: "Garlic Bread", Price: 22000, IsAvailable: true},
-		{CategoryID: categoryMap["Appetizer"], Name: "Chicken Spring Roll", Price: 28000, IsAvailable: true},
+		{CategoryID: categoryMap["Appetizer"], Name: "Garlic Bread", Price: decimal.New(22000, 0), IsAvailable: true},
+		{CategoryID: categoryMap["Appetizer"], Name: "Chicken Spring Roll", Price: decimal.New(28000, 0), IsAvailable: true},
 
-		{CategoryID: categoryMap["Main Course"], Name: "Nasi Goreng Spesial", Price: 45000, IsAvailable: true},
-		{CategoryID: categoryMap["Main Course"], Name: "Mie Goreng Seafood", Price: 48000, IsAvailable: true},
-		{CategoryID: categoryMap["Main Course"], Name: "Grilled Chicken Steak", Price: 65000, IsAvailable: true},
+		{CategoryID: categoryMap["Main Course"], Name: "Nasi Goreng Spesial", Price: decimal.New(45000, 0), IsAvailable: true},
+		{CategoryID: categoryMap["Main Course"], Name: "Mie Goreng Seafood", Price: decimal.New(48000, 0), IsAvailable: true},
+		{CategoryID: categoryMap["Main Course"], Name: "Grilled Chicken Steak", Price: decimal.New(65000, 0), IsAvailable: true},
 
-		{CategoryID: categoryMap["Dessert"], Name: "Chocolate Lava Cake", Price: 32000, IsAvailable: true},
-		{CategoryID: categoryMap["Dessert"], Name: "Vanilla Ice Cream", Price: 25000, IsAvailable: true},
+		{CategoryID: categoryMap["Dessert"], Name: "Chocolate Lava Cake", Price: decimal.New(32000, 0), IsAvailable: true},
+		{CategoryID: categoryMap["Dessert"], Name: "Vanilla Ice Cream", Price: decimal.New(25000, 0), IsAvailable: true},
 
-		{CategoryID: categoryMap["Beverage"], Name: "Hot Cappuccino", Price: 25000, IsAvailable: true},
-		{CategoryID: categoryMap["Beverage"], Name: "Iced Lemon Tea", Price: 18000, IsAvailable: true},
-		{CategoryID: categoryMap["Beverage"], Name: "Mineral Water", Price: 12000, IsAvailable: true},
+		{CategoryID: categoryMap["Beverage"], Name: "Hot Cappuccino", Price: decimal.New(25000, 0), IsAvailable: true},
+		{CategoryID: categoryMap["Beverage"], Name: "Iced Lemon Tea", Price: decimal.New(18000, 0), IsAvailable: true},
+		{CategoryID: categoryMap["Beverage"], Name: "Mineral Water", Price: decimal.New(12000, 0), IsAvailable: true},
 
-		{CategoryID: categoryMap["Snack"], Name: "French Fries", Price: 20000, IsAvailable: true},
-		{CategoryID: categoryMap["Snack"], Name: "Onion Rings", Price: 22000, IsAvailable: true},
+		{CategoryID: categoryMap["Snack"], Name: "French Fries", Price: decimal.New(20000, 0), IsAvailable: true},
+		{CategoryID: categoryMap["Snack"], Name: "Onion Rings", Price: decimal.New(22000, 0), IsAvailable: true},
 	}
 
 	for _, prod := range products {
@@ -345,5 +347,33 @@ func seedNotifications(db *gorm.DB, logger *zap.Logger) error {
 	}
 
 	logger.Info("notifications ensured")
+	return nil
+}
+
+func seedPaymentMethods(db *gorm.DB, logger *zap.Logger) error {
+	paymentMethods := []entity.PaymentMethod{
+		{Name: "Cash"},
+		{Name: "Credit Card"},
+		{Name: "Debit Card"},
+	}
+
+	if len(paymentMethods) == 0 {
+		return fmt.Errorf("no payment methods found, payment method seed aborted")
+	}
+
+	logger.Info("seeding payment methods", zap.Int("payment methods", len(paymentMethods)))
+
+	for _, p := range paymentMethods {
+		pm := entity.PaymentMethod{
+			Name: p.Name,
+		}
+
+		if err := db.
+			Where("name = ?", p.Name).
+			FirstOrCreate(&pm).Error; err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
