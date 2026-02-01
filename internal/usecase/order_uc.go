@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/entity"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/repository"
@@ -71,7 +72,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, order dto.Order) (*dto.O
 			TableID:        &order.TableID,
 			Tax:            taxAmount,
 			TotalPrice:     totalPrice,
-			ProgressStatus: "in proccess",
+			ProgressStatus: "in the kitchen",
 		}); err != nil {
 			return err
 		}
@@ -108,6 +109,56 @@ func (s *OrderService) CreateOrder(ctx context.Context, order dto.Order) (*dto.O
 		TableID:      *orderDetail.TableID,
 		Status:       orderDetail.OrderStatus,
 		SubTotal:     subTotal,
+		Tax:          orderDetail.Tax,
+		TotalPrice:   orderDetail.TotalPrice,
+	}
+
+	return &orderDetailRes, nil
+}
+
+func (s *OrderService) PayOrder(ctx context.Context, paymentMethodID int64, orderID uuid.UUID) (*dto.OrderResponse, error) {
+	// check paymentMethod
+	paymentMethod, err := s.repo.GetPaymentMethodsById(ctx, paymentMethodID)
+	if err != nil {
+		return nil, err
+	}
+
+	if paymentMethod == nil {
+		return nil, errors.New("payment method not found")
+	}
+
+	// update order
+	if err := s.tx.Transaction(func(tx *gorm.DB) error {
+		if err := s.repo.UpdateOrder(tx, ctx, entity.Order{
+			ID:              orderID,
+			PaymentMethodID: &paymentMethodID,
+			ProgressStatus:  "cooking now",
+		}); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	// get order detail
+	orderDetail, err := s.repo.GetOrderDetailByID(ctx, orderID)
+	if err != nil {
+		return nil, err
+	}
+
+	// get sub total
+	tax := orderDetail.TotalPrice.Mul(decimal.NewFromFloat(10.0)).Div(decimal.NewFromFloat(110.0))
+	net := orderDetail.TotalPrice.Sub(tax)
+
+	orderDetailRes := dto.OrderResponse{
+		OrderID:      orderDetail.ID,
+		OrderNumber:  orderDetail.OrderNumber,
+		CustomerName: orderDetail.CustomerName,
+		TableID:      *orderDetail.TableID,
+		Status:       orderDetail.OrderStatus,
+		SubTotal:     net,
 		Tax:          orderDetail.Tax,
 		TotalPrice:   orderDetail.TotalPrice,
 	}

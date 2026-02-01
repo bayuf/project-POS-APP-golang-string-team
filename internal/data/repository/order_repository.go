@@ -14,6 +14,8 @@ type OrderRepositoryIface interface {
 	GetProductsInfoByID(ctx context.Context, items []int64) (*[]entity.Product, error)
 	AddOrder(tx *gorm.DB, ctx context.Context, order *entity.Order) error
 	AddOrderItems(tx *gorm.DB, ctx context.Context, itemOrders []entity.OrderItem) error
+	GetPaymentMethodsById(ctx context.Context, id int64) (*entity.PaymentMethod, error)
+	UpdateOrder(tx *gorm.DB, ctx context.Context, order entity.Order) error
 }
 
 type OrderRepository struct {
@@ -26,6 +28,19 @@ func NewOrderRepository(db *gorm.DB, log *zap.Logger) *OrderRepository {
 		db:     db,
 		logger: log,
 	}
+}
+
+func (r *OrderRepository) GetPaymentMethodsById(ctx context.Context, id int64) (*entity.PaymentMethod, error) {
+	var paymentMethods entity.PaymentMethod
+
+	if err := r.db.WithContext(ctx).
+		Where("id = ?", id).
+		Find(&paymentMethods).Error; err != nil {
+		r.logger.Error("failed to get payment methods", zap.Error(err))
+		return nil, err
+	}
+
+	return &paymentMethods, nil
 }
 
 func (r *OrderRepository) GetOrderDetailByID(ctx context.Context, ID uuid.UUID) (*entity.Order, error) {
@@ -70,6 +85,18 @@ func (r *OrderRepository) AddOrder(tx *gorm.DB, ctx context.Context, order *enti
 func (r *OrderRepository) AddOrderItems(tx *gorm.DB, ctx context.Context, itemOrders []entity.OrderItem) error {
 	if err := r.db.WithContext(ctx).Create(&itemOrders).Error; err != nil {
 		r.logger.Error("failed to add order item", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (r *OrderRepository) UpdateOrder(tx *gorm.DB, ctx context.Context, order entity.Order) error {
+	if err := tx.WithContext(ctx).
+		Where("id = ?", order.ID).
+		Updates(&order).
+		Error; err != nil {
+		r.logger.Error("failed to update order", zap.Error(err))
 		return err
 	}
 

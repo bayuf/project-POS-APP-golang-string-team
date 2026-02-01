@@ -32,6 +32,7 @@ func dataSeeds() []SeederFunc {
 		seedCategories,
 		seedProducts,
 		seedInventories,
+		seedPaymentMethods,
 	}
 }
 
@@ -247,6 +248,34 @@ func seedInventories(db *gorm.DB, logger *zap.Logger) error {
 		if err := db.
 			Where("product_id = ?", p.ID).
 			FirstOrCreate(&inv).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func seedPaymentMethods(db *gorm.DB, logger *zap.Logger) error {
+	paymentMethods := []entity.PaymentMethod{
+		{Name: "Cash"},
+		{Name: "Credit Card"},
+		{Name: "Debit Card"},
+	}
+
+	if len(paymentMethods) == 0 {
+		return fmt.Errorf("no payment methods found, payment method seed aborted")
+	}
+
+	logger.Info("seeding payment methods", zap.Int("payment methods", len(paymentMethods)))
+
+	for _, p := range paymentMethods {
+		pm := entity.PaymentMethod{
+			Name: p.Name,
+		}
+
+		if err := db.
+			Where("name = ?", p.Name).
+			FirstOrCreate(&pm).Error; err != nil {
 			return err
 		}
 	}
