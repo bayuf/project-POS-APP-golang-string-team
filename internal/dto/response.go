@@ -144,3 +144,9 @@ type OrderResponse struct {
 	Tax          decimal.Decimal `json:"tax"`
 	TotalPrice   decimal.Decimal `json:"total_price"`
 }
+
+// PAYMENT METHODS
+type PaymentMethodResponse struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}

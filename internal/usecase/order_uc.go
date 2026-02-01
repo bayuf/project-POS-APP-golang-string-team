@@ -280,3 +280,29 @@ func (s *OrderService) CompleteOrder(ctx context.Context, orderID uuid.UUID) err
 	}
 	return nil
 }
+
+func (s *OrderService) GetPaymentMethods(ctx context.Context) ([]dto.PaymentMethodResponse, error) {
+	method, err := s.repo.GetPaymentMethods(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var paymentMethods []dto.PaymentMethodResponse
+	for _, m := range method {
+		paymentMethods = append(paymentMethods, dto.PaymentMethodResponse{
+			ID:   int64(m.ID),
+			Name: m.Name,
+		})
+	}
+
+	return paymentMethods, nil
+}
+
+func (s *OrderService) GetTables(ctx context.Context) ([]entity.RestaurantTable, error) {
+	tables, err := s.repo.GetTables(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return tables, nil
+}

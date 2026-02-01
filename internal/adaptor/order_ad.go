@@ -158,3 +158,29 @@ func (h *OrderHandler) CompleteOrder(c *gin.Context) {
 
 	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
 }
+
+func (h *OrderHandler) GetPaymentMethods(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	methods, err := h.uc.GetPaymentMethods(ctx)
+	if err != nil {
+		h.logger.Error("failed to get payment methods", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", methods)
+}
+
+func (h *OrderHandler) GetTables(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	tables, err := h.uc.GetTables(ctx)
+	if err != nil {
+		h.logger.Error("failed to get tables", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", tables)
+}
