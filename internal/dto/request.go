@@ -117,6 +117,8 @@ type Order struct {
 	CustomerName string      `json:"customer_name" binding:"required"`
 	TableID      int64       `json:"table_id" binding:"omitempty"`
 	Orders       []OrderItem `json:"orders" binding:"required"`
+}
+
 // RESERVATION
 type CreateReservationRequest struct {
 	CustomerName    string `json:"customer_name" binding:"required,min=3,max=100"`
