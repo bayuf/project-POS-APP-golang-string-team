@@ -98,17 +98,6 @@ type InventoryFilterRequest struct {
 	Limit int `form:"limit" binding:"omitempty,min=1,max=100"`
 }
 
-// type InventoryProductFilter struct {
-// 	// ProductName string
-// 	// Category    string
-// 	// IsAvailable *bool
-// 	ProductName *string
-// 	CategoryID  *int64
-// 	MinStock    *int
-// 	MaxStock    *int
-// 	// IsAvailable *bool
-// }
-
 type SearchInventoryQuery struct {
 	ProductName string `form:"product_name"`
 	CategoryID  *int64 `form:"category_id"`
@@ -128,4 +117,29 @@ type Order struct {
 	CustomerName string      `json:"customer_name" binding:"required"`
 	TableID      int64       `json:"table_id" binding:"omitempty"`
 	Orders       []OrderItem `json:"orders" binding:"required"`
+// RESERVATION
+type CreateReservationRequest struct {
+	CustomerName    string `json:"customer_name" binding:"required,min=3,max=100"`
+	TableID         int64  `json:"table_id" binding:"required"`
+	ReservationTime string `json:"reservation_time" binding:"required"`
+}
+
+// type UpdateReservation struct {
+// 	CustomerName    string `json:"customer_name" binding:"omitempty,min=3,max=100"`
+// 	TableID         int64  `json:"table_id" binding:"omitempty"`
+// 	ReservationTime string `json:"reservation_time" binding:"omitempty"`
+// 	IsCancelled     *bool  `json:"is_cancelled" binding:"omitempty"`
+// }
+
+type UpdateReservationRequest struct {
+	TableID     int64 `json:"table_id" binding:"required"`
+	IsCancelled bool  `json:"is_cancelled"`
+}
+
+type ReservationFilterRequest struct {
+	Page       int    `form:"page" binding:"omitempty,min=1"`
+	Limit      int    `form:"limit" binding:"omitempty,min=1,max=100"`
+	Status     string `form:"status" binding:"omitempty,oneof=active cancelled"`
+	SearchName string `form:"search_name"`
+	Date       string `form:"date"` // filter berdasarkan date tertentu
 }

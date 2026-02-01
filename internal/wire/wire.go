@@ -52,6 +52,8 @@ func Wiring(tx *gorm.DB, repo *repository.Repository, logger *zap.Logger, config
 	wireMenuManagement(r1, adaptor)
 	wireInventory(r1, adaptor)
 	wireOrder(r1, adaptor)
+	wireReservation(r1, adaptor)
+	wireNotification(r1, adaptor, authMW)
 
 	return &App{
 		Route: router,
@@ -136,4 +138,22 @@ func wireOrder(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 	order.PATCH("cancel/:id", adaptor.OrderHandler.CancelOrder)
 	order.PUT("process/:id", adaptor.OrderHandler.ProcessOrder)
 	order.PUT("complete/:id", adaptor.OrderHandler.CompleteOrder)
+}
+  
+func wireReservation(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
+	reservation := router.Group("/reservations")
+
+	reservation.GET("", adaptor.ReservationHandler.FindAllReservations)
+	reservation.GET("/:id", adaptor.ReservationHandler.FindByID)
+	reservation.POST("", adaptor.ReservationHandler.Create)
+	reservation.PUT("/:id", adaptor.ReservationHandler.Update)
+}
+
+func wireNotification(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.AuthMiddleware) {
+	notifications := router.Group("/notifications")
+	notifications.Use(mw.SessionAuthMiddleware()) // Wajib login
+
+	notifications.GET("", adaptor.NotificationHandler.GetMyNotifications)
+	notifications.PATCH("/:id/read", adaptor.NotificationHandler.MarkRead)
+	notifications.DELETE("/:id", adaptor.NotificationHandler.Delete)
 }
