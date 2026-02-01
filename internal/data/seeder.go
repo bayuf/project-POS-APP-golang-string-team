@@ -33,6 +33,7 @@ func dataSeeds() []SeederFunc {
 		seedInventories,
 		SeedTables,
 		SeedReservations,
+		seedNotifications,
 	}
 }
 
@@ -300,5 +301,49 @@ func SeedReservations(db *gorm.DB, logger *zap.Logger) error {
 		}
 	}
 	logger.Info("reservations ensured")
+	return nil
+}
+
+func seedNotifications(db *gorm.DB, logger *zap.Logger) error {
+	var superAdmin entity.User
+	// superadmin target notif
+	if err := db.Where("role = ?", "superadmin").First(&superAdmin).Error; err != nil {
+		logger.Warn("Superadmin not found, skipping notification seed")
+		return nil
+	}
+
+	notifications := []entity.Notification{
+		{
+			ID:      uuid.New(),
+			UserID:  superAdmin.ID,
+			Title:   "Selamat Datang!",
+			Message: "Sistem POS String Team sudah siap dipakai. Yuk, cek stok inventori kamu hari ini.",
+			Status:  "new",
+		},
+		{
+			ID:      uuid.New(),
+			UserID:  superAdmin.ID,
+			Title:   "Stok Hampir Habis",
+			Message: "Produk 'Garlic Bread' tinggal kurang dari 5 pcs. Jangan lupa segera restock, ya.",
+			Status:  "new",
+		},
+		{
+			ID:      uuid.New(),
+			UserID:  superAdmin.ID,
+			Title:   "Reservasi Baru Masuk",
+			Message: "Pelanggan atas nama John Doe telah memesan Meja #3 untuk pukul 19:00.",
+			Status:  "read",
+		},
+	}
+
+	for _, n := range notifications {
+		if err := db.Where("title = ? AND message = ? AND user_id = ?", n.Title, n.Message, n.UserID).
+			FirstOrCreate(&n).Error; err != nil {
+			logger.Error("failed to seed notification", zap.Error(err))
+			return err
+		}
+	}
+
+	logger.Info("notifications ensured")
 	return nil
 }
