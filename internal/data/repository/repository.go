@@ -12,6 +12,7 @@ type Repository struct {
 	AuthRepository  AuthRepositoryIface
 	InventoryRepo   InventoryRepository
 	ReservationRepo ReservationRepository
+	NotifRepo       NotificationRepository
 }
 
 func NewRepository(db *gorm.DB, logger *zap.Logger) *Repository {
@@ -22,5 +23,6 @@ func NewRepository(db *gorm.DB, logger *zap.Logger) *Repository {
 		AuthRepository:  NewAuthRepository(db, logger),
 		InventoryRepo:   NewInventoryRepository(db, logger),
 		ReservationRepo: NewReservationRepository(db, logger),
+		NotifRepo:       NewNotificationRepository(db, logger),
 	}
 }
