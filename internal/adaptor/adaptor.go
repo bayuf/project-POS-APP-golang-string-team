@@ -9,6 +9,7 @@ import (
 type Adaptor struct {
 	CategoryHandler *CategoryHandler
 	ProductsHandler *ProductHandler
+	*NotificationHandler
 	*InventoryHandler
 	*ReservationHandler
 	*UserHandler
@@ -17,11 +18,12 @@ type Adaptor struct {
 
 func NewAdaptor(uc *usecase.UseCase, logger *zap.Logger, config *utils.Configuration) *Adaptor {
 	return &Adaptor{
-		CategoryHandler:    NewCategoryHandler(uc),
-		ProductsHandler:    NewProductHandler(uc),
-		InventoryHandler:   NewInventoryHandler(uc),
-		ReservationHandler: NewReservationHandler(uc.ReservationService, logger, config),
-		UserHandler:        NewUserHandler(uc.UserService, logger, config),
-		AuthHandler:        NewAuthHandler(uc.AuthService, logger, config),
+		CategoryHandler:     NewCategoryHandler(uc),
+		ProductsHandler:     NewProductHandler(uc),
+		InventoryHandler:    NewInventoryHandler(uc),
+		NotificationHandler: NewNotificationHandler(uc.NotificationService, logger, config),
+		ReservationHandler:  NewReservationHandler(uc.ReservationService, logger, config),
+		UserHandler:         NewUserHandler(uc.UserService, logger, config),
+		AuthHandler:         NewAuthHandler(uc.AuthService, logger, config),
 	}
 }

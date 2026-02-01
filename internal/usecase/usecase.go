@@ -16,6 +16,7 @@ type UseCase struct {
 	*ProductService
 	*InventoryService
 	*ReservationService
+	*NotificationService
 }
 
 func NewUseCase(repo *repository.Repository, logger *zap.Logger, tx *gorm.DB, config *utils.Configuration, emailJob chan<- utils.EmailJob) *UseCase {
@@ -23,10 +24,11 @@ func NewUseCase(repo *repository.Repository, logger *zap.Logger, tx *gorm.DB, co
 		log:  logger,
 		repo: *repo,
 
-		UserService:        NewUserService(repo.UserRepository, logger, emailJob),
-		AuthService:        NewAuthService(repo.AuthRepository, logger, tx, emailJob),
-		ProductService:     NewProductService(repo.ProductRepo, logger, tx),
-		InventoryService:   NewInventoryService(repo.InventoryRepo, logger, tx),
-		ReservationService: NewReservationService(repo.ReservationRepo, logger, tx),
+		UserService:         NewUserService(repo.UserRepository, logger, emailJob),
+		AuthService:         NewAuthService(repo.AuthRepository, logger, tx, emailJob),
+		ProductService:      NewProductService(repo.ProductRepo, logger, tx),
+		InventoryService:    NewInventoryService(repo.InventoryRepo, logger, tx),
+		ReservationService:  NewReservationService(repo.ReservationRepo, logger, tx),
+		NotificationService: NewNotificationService(repo.NotifRepo, logger),
 	}
 }
