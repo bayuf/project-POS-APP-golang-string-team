@@ -8,6 +8,7 @@ import (
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/entity"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/repository"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/dto"
+	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -41,7 +42,7 @@ func (u *ProductService) CreateProduct(ctx context.Context, req dto.CreateProduc
 
 		product := &entity.Product{
 			Name:        req.Name,
-			Price:       req.Price,
+			Price:       decimal.NewFromInt(req.Price),
 			CategoryID:  req.CategoryID,
 			IsAvailable: true,
 		}
@@ -126,7 +127,7 @@ func (u UseCase) UpdateProductById(ctx context.Context, id int64, req dto.Create
 	updateProd := &entity.Product{
 		CategoryID:  req.CategoryID,
 		Name:        req.Name,
-		Price:       req.Price,
+		Price:       decimal.NewFromInt(req.Price),
 		IsAvailable: true,
 	}
 

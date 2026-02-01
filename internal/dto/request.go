@@ -75,10 +75,10 @@ type CreateCategory struct {
 }
 
 type CreateProduct struct {
-	CategoryID  int64   `json:"category_id" binding:"required"`
-	Name        string  `json:"name" binding:"required"`
-	Price       float64 `json:"price" binding:"required,gte=0"`
-	IsAvailable *bool   `json:"is_available,omitempty"`
+	CategoryID  int64  `json:"category_id" binding:"required"`
+	Name        string `json:"name" binding:"required"`
+	Price       int64  `json:"price" binding:"required,gte=0"`
+	IsAvailable *bool  `json:"is_available,omitempty"`
 }
 
 // INVENTORY
@@ -116,4 +116,16 @@ type SearchInventoryQuery struct {
 	MaxStock    *int   `form:"max_stock"`
 	Page        int    `form:"page"`
 	Limit       int    `form:"limit"`
+}
+
+// ORDERS
+type OrderItem struct {
+	ID       int64 `json:"item_id" binding:"required"`
+	Quantity int   `json:"quantity" binding:"required,min=1"`
+}
+
+type Order struct {
+	CustomerName string      `json:"customer_name" binding:"required"`
+	TableID      int64       `json:"table_id" binding:"required,gt=0"`
+	Orders       []OrderItem `json:"orders" binding:"required"`
 }

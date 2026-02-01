@@ -12,6 +12,7 @@ type Adaptor struct {
 	*InventoryHandler
 	*UserHandler
 	*AuthHandler
+	*OrderHandler
 }
 
 func NewAdaptor(uc *usecase.UseCase, logger *zap.Logger, config *utils.Configuration) *Adaptor {
@@ -21,5 +22,6 @@ func NewAdaptor(uc *usecase.UseCase, logger *zap.Logger, config *utils.Configura
 		InventoryHandler: NewInventoryHandler(uc),
 		UserHandler:      NewUserHandler(uc.UserService, logger, config),
 		AuthHandler:      NewAuthHandler(uc.AuthService, logger, config),
+		OrderHandler:     NewOrderHandler(uc.OrderService, logger, config),
 	}
 }

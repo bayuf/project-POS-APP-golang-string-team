@@ -51,6 +51,7 @@ func Wiring(tx *gorm.DB, repo *repository.Repository, logger *zap.Logger, config
 	wireAuth(r1, adaptor, authMW)
 	wireMenuManagement(r1, adaptor)
 	wireInventory(r1, adaptor)
+	wireOrder(r1, adaptor)
 
 	return &App{
 		Route: router,
@@ -123,4 +124,11 @@ func wireInventory(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 	inven.GET("/:id", adaptor.InventoryHandler.FindInventoryDetail)
 	inven.PUT("/:id", adaptor.InventoryHandler.UpdateInventoryId)
 	inven.DELETE("/:id", adaptor.InventoryHandler.DeleteInventoryById)
+}
+
+// belum ada middleware
+func wireOrder(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
+	order := router.Group("/orders")
+
+	order.POST("", adaptor.Order)
 }

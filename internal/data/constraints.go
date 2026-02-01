@@ -80,11 +80,19 @@ func runConstraints(db *gorm.DB) error {
 			`,
 		},
 		{
+			"chk_progress_orders_status",
+			`
+			ALTER TABLE orders
+			ADD CONSTRAINT chk_progress_orders_status
+			CHECK (progress_status IN ('cancelled','in the kitchen','cooking now','ready to serve'));
+			`,
+		},
+		{
 			"chk_orders_status",
 			`
 			ALTER TABLE orders
 			ADD CONSTRAINT chk_orders_status
-			CHECK (status IN ('pending','paid','cancelled'));
+			CHECK (order_status IN ('in proccess','ready','completed', 'cancelled'));
 			`,
 		},
 		{

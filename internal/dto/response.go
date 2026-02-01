@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 type Pagination struct {
@@ -94,10 +95,10 @@ type CategoryResponse struct {
 
 // global prod response
 type ProductGlobalResponse struct {
-	ID          int64   `json:"id"`
-	Name        string  `json:"name"`
-	Price       float64 `json:"price"`
-	IsAvailable bool    `json:"is_available"`
+	ID          int64           `json:"id"`
+	Name        string          `json:"name"`
+	Price       decimal.Decimal `json:"price"`
+	IsAvailable bool            `json:"is_available"`
 
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt *time.Time `json:"updated_at"`
@@ -130,4 +131,16 @@ type ProductResponseInInventory struct {
 	Name        string  `json:"name"`
 	Price       float64 `json:"price"`
 	IsAvailable bool    `json:"is_available"`
+}
+
+// ORDERS
+type OrderResponse struct {
+	OrderID      uuid.UUID       `json:"order_id"`
+	OrderNumber  string          `json:"order_number"`
+	CustomerName string          `json:"customer_name"`
+	TableID      int64           `json:"table_id"`
+	Status       string          `json:"status"`
+	SubTotal     decimal.Decimal `json:"sub_total"`
+	Tax          decimal.Decimal `json:"tax"`
+	TotalPrice   decimal.Decimal `json:"total_price"`
 }
