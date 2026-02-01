@@ -133,4 +133,7 @@ func wireOrder(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 	order.POST("", adaptor.Order)
 	order.PUT("/:id", adaptor.OrderHandler.EditOrder)
 	order.PUT("pay/:id", adaptor.OrderHandler.PayOrder)
+	order.PATCH("cancel/:id", adaptor.OrderHandler.CancelOrder)
+	order.PUT("process/:id", adaptor.OrderHandler.ProcessOrder)
+	order.PUT("complete/:id", adaptor.OrderHandler.CompleteOrder)
 }

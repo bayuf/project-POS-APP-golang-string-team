@@ -100,5 +100,61 @@ func (h *OrderHandler) EditOrder(c *gin.Context) {
 	}
 
 	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
+}
 
+func (h *OrderHandler) CancelOrder(c *gin.Context) {
+	ctx := c.Request.Context()
+	orderIDStr := c.Param("id")
+	orderID, err := uuid.Parse(orderIDStr)
+	if err != nil {
+		h.logger.Error("failed to parse order id", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	if err := h.uc.CancelOrder(ctx, orderID); err != nil {
+		h.logger.Error("failed to cancel order", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
+}
+
+func (h *OrderHandler) ProcessOrder(c *gin.Context) {
+	ctx := c.Request.Context()
+	orderIDStr := c.Param("id")
+	orderID, err := uuid.Parse(orderIDStr)
+	if err != nil {
+		h.logger.Error("failed to parse order id", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	if err := h.uc.ProcessOrder(ctx, orderID); err != nil {
+		h.logger.Error("failed to process order", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
+}
+
+func (h *OrderHandler) CompleteOrder(c *gin.Context) {
+	ctx := c.Request.Context()
+	orderIDStr := c.Param("id")
+	orderID, err := uuid.Parse(orderIDStr)
+	if err != nil {
+		h.logger.Error("failed to parse order id", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	if err := h.uc.CompleteOrder(ctx, orderID); err != nil {
+		h.logger.Error("failed to complete order", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusInternalServerError, "failed", err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, http.StatusOK, "success", nil)
 }

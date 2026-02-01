@@ -129,7 +129,7 @@ func (s *OrderService) PayOrder(ctx context.Context, paymentMethodID int64, orde
 
 	// update order
 	if err := s.tx.Transaction(func(tx *gorm.DB) error {
-		if err := s.repo.UpdateOrder(tx, ctx, entity.Order{
+		if err := s.repo.EditOrder(tx, ctx, entity.Order{
 			ID:              orderID,
 			PaymentMethodID: &paymentMethodID,
 			ProgressStatus:  "cooking now",
@@ -206,7 +206,7 @@ func (s *OrderService) EditOrder(ctx context.Context, newOrderData dto.Order, or
 		totalPrice = totalPrice.Add(taxAmount)
 
 		// update order
-		if err := s.repo.UpdateOrder(tx, ctx, entity.Order{
+		if err := s.repo.EditOrder(tx, ctx, entity.Order{
 			ID:           orderData.ID,
 			CustomerName: newOrderData.CustomerName,
 			Tax:          taxAmount,
@@ -234,5 +234,49 @@ func (s *OrderService) EditOrder(ctx context.Context, newOrderData dto.Order, or
 		return err
 	}
 
+	return nil
+}
+
+func (s *OrderService) CancelOrder(ctx context.Context, orderID uuid.UUID) error {
+	if err := s.repo.DeleteOrder(ctx, orderID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *OrderService) ProcessOrder(ctx context.Context, orderID uuid.UUID) error {
+	// get order detail
+	orderItem, err := s.repo.GetOrderItemsByOrderID(ctx, orderID)
+	if err != nil {
+		return err
+	}
+
+	products := make([]entity.OrderItem, len(*orderItem))
+	for _, item := range *orderItem {
+		products = append(products, item)
+	}
+
+	if err := s.tx.Transaction(func(tx *gorm.DB) error {
+
+		if err := s.repo.UpdateStockInventories(tx, ctx, products); err != nil {
+			return err
+		}
+
+		if err := s.repo.ProcessOrder(tx, ctx, orderID); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *OrderService) CompleteOrder(ctx context.Context, orderID uuid.UUID) error {
+	if err := s.repo.CompleteOrder(ctx, orderID); err != nil {
+		return err
+	}
 	return nil
 }
