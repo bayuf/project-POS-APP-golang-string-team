@@ -150,3 +150,21 @@ type PaymentMethodResponse struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
 }
+
+type OrderItemResponse struct {
+	Quantity int64           `json:"quantity"`
+	ItemName string          `json:"item_name"`
+	Price    decimal.Decimal `json:"price"`
+}
+
+type OrderListResponse struct {
+	OrderID      uuid.UUID           `json:"order_id"`
+	OrderNumber  string              `json:"order_number"`
+	CustomerName string              `json:"customer_name"`
+	TableID      int64               `json:"table_id"`
+	OrderStatus  string              `json:"order_status"`
+	CreatedAt    time.Time           `json:"created_at"`
+	Progress     string              `json:"progress"`
+	Items        []OrderItemResponse `json:"items"`
+	SubTotal     decimal.Decimal     `json:"sub_total"`
+}

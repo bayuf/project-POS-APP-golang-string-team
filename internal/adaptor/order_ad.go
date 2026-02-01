@@ -2,6 +2,7 @@ package adaptor
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/dto"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/usecase"
@@ -183,4 +184,35 @@ func (h *OrderHandler) GetTables(c *gin.Context) {
 	}
 
 	utils.ResponseSuccess(c, http.StatusOK, "success", tables)
+}
+
+func (h *OrderHandler) GetOrders(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	pageStr := c.Query("page")
+	search := c.Query("search")
+	sortBy := c.Query("sort_by")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		h.logger.Error("failed to parse page", zap.Error(err))
+		utils.ResponseFailed(c, http.StatusBadRequest, "failed", err.Error())
+		return
+	}
+
+	// Construct DTO
+	req := dto.OrderFilterRequest{
+		Page:   page,
+		Limit:  h.config.Limit,
+		Search: search,
+		SortBy: sortBy,
+	}
+
+	result, pagination, err := h.uc.GetListOrders(ctx, req)
+	if err != nil {
+		utils.ResponseFailed(c, http.StatusBadGateway, "failed", err.Error())
+		return
+	}
+
+	utils.ResponsePagination(c, http.StatusOK, "success", result, pagination)
 }

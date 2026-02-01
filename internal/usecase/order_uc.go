@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"math"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/entity"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/repository"
@@ -26,6 +27,59 @@ func NewOrderService(repo repository.OrderRepositoryIface, log *zap.Logger, tx *
 		log:  log,
 		tx:   tx,
 	}
+}
+
+func (s *OrderService) GetListOrders(ctx context.Context, req dto.OrderFilterRequest) ([]dto.OrderListResponse, dto.Pagination, error) {
+	// Set default limit jika kosong
+	if req.Page == 0 {
+		req.Page = 1
+	}
+	if req.Limit == 0 {
+		req.Limit = 5
+	}
+
+	orders, total, err := s.repo.GetListOrders(ctx, req)
+	if err != nil {
+		return nil, dto.Pagination{}, err
+	}
+
+	orderRes := make([]dto.OrderListResponse, len(orders))
+	for i, order := range orders {
+		itemres := make([]dto.OrderItemResponse, 0, len(order.Items))
+		for _, item := range order.Items {
+			itemres = append(itemres, dto.OrderItemResponse{
+				Quantity: int64(item.Quantity),
+				ItemName: item.Product.Name,
+				Price:    item.Price,
+			})
+		}
+
+		tax := order.TotalPrice.Mul(decimal.NewFromFloat(10.0)).Div(decimal.NewFromFloat(110.0))
+		net := order.TotalPrice.Sub(tax)
+
+		orderRes[i] = dto.OrderListResponse{
+			OrderID:      order.ID,
+			OrderNumber:  order.OrderNumber,
+			CustomerName: order.CustomerName,
+			TableID:      *order.TableID,
+			OrderStatus:  order.OrderStatus,
+			Progress:     order.ProgressStatus,
+			CreatedAt:    order.CreatedAt,
+			Items:        itemres,
+			SubTotal:     net,
+		}
+	}
+
+	totalPages := int(math.Ceil(float64(total) / float64(req.Limit)))
+
+	pagination := dto.Pagination{
+		CurrentPage:  req.Page,
+		Limit:        req.Limit,
+		TotalPages:   totalPages,
+		TotalRecords: total,
+	}
+
+	return orderRes, pagination, nil
 }
 
 func (s *OrderService) CreateOrder(ctx context.Context, order dto.Order) (*dto.OrderResponse, error) {
