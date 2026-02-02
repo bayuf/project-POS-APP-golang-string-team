@@ -132,14 +132,18 @@ func wireInventory(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 func wireOrder(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 	order := router.Group("/orders")
 
+	order.GET("", adaptor.OrderHandler.GetOrders)
+	order.GET("/payment-methods", adaptor.OrderHandler.GetPaymentMethods)
+	order.GET("/tables", adaptor.OrderHandler.GetTables)
 	order.POST("", adaptor.Order)
 	order.PUT("/:id", adaptor.OrderHandler.EditOrder)
 	order.PUT("pay/:id", adaptor.OrderHandler.PayOrder)
 	order.PATCH("cancel/:id", adaptor.OrderHandler.CancelOrder)
 	order.PUT("process/:id", adaptor.OrderHandler.ProcessOrder)
 	order.PUT("complete/:id", adaptor.OrderHandler.CompleteOrder)
+
 }
-  
+
 func wireReservation(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 	reservation := router.Group("/reservations")
 

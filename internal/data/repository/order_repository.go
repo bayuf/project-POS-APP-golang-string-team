@@ -2,14 +2,20 @@ package repository
 
 import (
 	"context"
+	"strings"
+	"time"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/entity"
+	"github.com/bayuf/project-POS-APP-golang-string-team/internal/dto"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 type OrderRepositoryIface interface {
+	GetListOrders(ctx context.Context, f dto.OrderFilterRequest) ([]entity.Order, int64, error)
+	GetTables(ctx context.Context) ([]entity.RestaurantTable, error)
+	GetPaymentMethods(ctx context.Context) ([]entity.PaymentMethod, error)
 	GetOrderItemsByOrderID(ctx context.Context, orderID uuid.UUID) (*[]entity.OrderItem, error)
 	GetOrderDetailByID(ctx context.Context, ID uuid.UUID) (*entity.Order, error)
 	GetProductsInfoByID(ctx context.Context, items []int64) (*[]entity.Product, error)
@@ -34,6 +40,88 @@ func NewOrderRepository(db *gorm.DB, log *zap.Logger) *OrderRepository {
 		db:     db,
 		logger: log,
 	}
+}
+
+func (r *OrderRepository) GetListOrders(ctx context.Context, f dto.OrderFilterRequest) ([]entity.Order, int64, error) {
+	var orders []entity.Order
+	var totalOrder int64
+
+	query := r.db.WithContext(ctx).
+		Model(&entity.Order{}).
+		Preload("Table").
+		Preload("Items").
+		Preload("Items.Product")
+
+	if f.Search != "" {
+		searchPattern := "%" + strings.ToLower(f.Search) + "%"
+		query = query.Where("LOWER(orders.customer_name) LIKE ?", searchPattern)
+	}
+
+	if err := query.Count(&totalOrder).Error; err != nil {
+		r.logger.Error("failed to count orders", zap.Error(err))
+		return nil, 0, err
+	}
+
+	switch f.SortBy {
+	case "in-process":
+		query = query.Where("orders.order_status = ?", "in proccess")
+		query = query.Order("orders.updated_at desc")
+	case "cancelled":
+		query = query.Where("orders.order_status = ?", "cancelled")
+		query = query.Order("orders.updated_at desc")
+	case "completed":
+		query = query.Where("orders.order_status = ?", "completed")
+		query = query.Order("orders.updated_at desc")
+	default:
+		query = query.Order("orders.updated_at desc")
+	}
+
+	offset := (f.Page - 1) * f.Limit
+
+	err := query.Limit(f.Limit).Offset(offset).Find(&orders).Error
+	if err != nil {
+		r.logger.Error("failed to get orders", zap.Error(err))
+		return nil, 0, err
+	}
+
+	return orders, totalOrder, err
+}
+
+func (r *OrderRepository) GetTables(ctx context.Context) ([]entity.RestaurantTable, error) {
+	var tables []entity.RestaurantTable
+	now := time.Now()
+
+	err := r.db.WithContext(ctx).
+		Table("restaurant_tables").
+		Joins(`
+				LEFT JOIN reservations
+				ON reservations.table_id = restaurant_tables.id
+				AND reservations.is_cancelled = false
+				AND reservations.reservation_time >= ?
+			`, now).
+		Where("restaurant_tables.is_active = ?", true).
+		Where("reservations.id IS NULL").
+		Find(&tables).
+		Error
+
+	if err != nil {
+		r.logger.Error("failed to get ready tables", zap.Error(err))
+		return nil, err
+	}
+
+	return tables, nil
+}
+
+func (r *OrderRepository) GetPaymentMethods(ctx context.Context) ([]entity.PaymentMethod, error) {
+	var paymentMethods []entity.PaymentMethod
+
+	if err := r.db.WithContext(ctx).
+		Find(&paymentMethods).Error; err != nil {
+		r.logger.Error("failed to get payment methods", zap.Error(err))
+		return nil, err
+	}
+
+	return paymentMethods, nil
 }
 
 func (r *OrderRepository) GetPaymentMethodsById(ctx context.Context, id int64) (*entity.PaymentMethod, error) {
