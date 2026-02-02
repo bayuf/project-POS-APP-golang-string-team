@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/adaptor"
+	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/entity"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/data/repository"
 	"github.com/bayuf/project-POS-APP-golang-string-team/internal/usecase"
 	"github.com/bayuf/project-POS-APP-golang-string-team/pkg/middleware"
@@ -49,10 +50,10 @@ func Wiring(tx *gorm.DB, repo *repository.Repository, logger *zap.Logger, config
 	// Wiring Routes
 	wireUser(r1, adaptor, authMW)
 	wireAuth(r1, adaptor, authMW)
-	wireMenuManagement(r1, adaptor)
-	wireInventory(r1, adaptor)
-	wireOrder(r1, adaptor)
-	wireReservation(r1, adaptor)
+	wireMenuManagement(r1, adaptor, authMW)
+	wireInventory(r1, adaptor, authMW)
+	wireOrder(r1, adaptor, authMW)
+	wireReservation(r1, adaptor, authMW)
 	wireNotification(r1, adaptor, authMW)
 
 	return &App{
@@ -65,11 +66,13 @@ func Wiring(tx *gorm.DB, repo *repository.Repository, logger *zap.Logger, config
 // All Route Here
 func wireUser(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.AuthMiddleware) {
 	users := router.Group("/users")
-	users.Use(mw.SessionAuthMiddleware())
+
+	users.Use(mw.SessionAuthMiddleware(), mw.RequireRoles("superadmin", "admin"))
 	users.GET("/profile", adaptor.GetMyProfile)
 	users.PATCH("/profile", adaptor.UpdateMyProfile)
 	users.GET("/admins", adaptor.GetAllAdmins)
-	users.PATCH("/permissions/:id", mw.RequireRoles("superadmin"), adaptor.UpdateUserPermissions)
+	users.PATCH("/permissions/:id", mw.RequireRoles("superadmin"), mw.CheckPermission(entity.PermissionSettings),
+		adaptor.UpdateUserPermissions)
 	users.Use(mw.RequireRoles("superadmin", "admin"))
 	users.GET("", adaptor.GetAllUsers)
 	users.GET("/:id", adaptor.GetUserByID)
@@ -84,14 +87,19 @@ func wireAuth(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.
 	auth.POST("/reset-password", adaptor.GetOtpResetPassword)
 	auth.POST("/verify-otp", adaptor.GetSessionResetPassword)
 	auth.POST("/update-password", adaptor.ResetPassword)
+
+	// logout need login first
 	auth.Use(mw.SessionAuthMiddleware())
 	auth.POST("/logout", adaptor.Logout)
 }
 
 // belum ada middleware
-func wireMenuManagement(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
+func wireMenuManagement(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.AuthMiddleware) {
 	menu := router.Group("/menu")
 	{
+		// middleware
+		menu.Use(mw.SessionAuthMiddleware(), mw.RequireRoles("superadmin", "admin"))
+
 		categories := menu.Group("/categories")
 		{
 			categories.GET("", adaptor.CategoryHandler.GetAllCategories) // path "/"
@@ -114,9 +122,11 @@ func wireMenuManagement(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 }
 
 // belum ada middleware
-func wireInventory(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
+func wireInventory(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.AuthMiddleware) {
 	inven := router.Group("/inventories")
 
+	// middleware
+	inven.Use(mw.SessionAuthMiddleware(), mw.RequireRoles("superadmin", "admin"), mw.CheckPermission(entity.PermissionInventory))
 	inven.POST("", adaptor.InventoryHandler.CreateInventory)
 	inven.GET("", adaptor.InventoryHandler.GetAllInventories)
 
@@ -129,8 +139,11 @@ func wireInventory(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 }
 
 // belum ada middleware
-func wireOrder(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
+func wireOrder(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.AuthMiddleware) {
 	order := router.Group("/orders")
+
+	// middleware
+	order.Use(mw.SessionAuthMiddleware(), mw.RequireRoles("superadmin", "admin"), mw.CheckPermission(entity.PermissionOrders))
 
 	order.GET("", adaptor.OrderHandler.GetOrders)
 	order.GET("/payment-methods", adaptor.OrderHandler.GetPaymentMethods)
@@ -144,8 +157,10 @@ func wireOrder(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 
 }
 
-func wireReservation(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
+func wireReservation(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.AuthMiddleware) {
 	reservation := router.Group("/reservations")
+
+	reservation.Use(mw.SessionAuthMiddleware(), mw.RequireRoles("superadmin", "admin"))
 
 	reservation.GET("", adaptor.ReservationHandler.FindAllReservations)
 	reservation.GET("/:id", adaptor.ReservationHandler.FindByID)
@@ -155,7 +170,7 @@ func wireReservation(router *gin.RouterGroup, adaptor *adaptor.Adaptor) {
 
 func wireNotification(router *gin.RouterGroup, adaptor *adaptor.Adaptor, mw *middleware.AuthMiddleware) {
 	notifications := router.Group("/notifications")
-	notifications.Use(mw.SessionAuthMiddleware()) // Wajib login
+	notifications.Use(mw.SessionAuthMiddleware(), mw.RequireRoles("superadmin", "admin"))
 
 	notifications.GET("", adaptor.NotificationHandler.GetMyNotifications)
 	notifications.PATCH("/:id/read", adaptor.NotificationHandler.MarkRead)
